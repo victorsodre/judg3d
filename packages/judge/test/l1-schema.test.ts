@@ -104,8 +104,9 @@ describe("L1 SCHEMA no fixture quebrado", () => {
       // Invariante 4: codigo + local + got/want.
       expect(violation.got).toMatchObject({ severity: "Error" });
       expect(violation.want).toMatchObject({ conformance: "glTF 2.0" });
-      expect(String((violation.got as { message: string }).message).length)
-        .toBeGreaterThan(0);
+      expect(
+        (violation.got as { message: string }).message.length,
+      ).toBeGreaterThan(0);
     }
   });
 

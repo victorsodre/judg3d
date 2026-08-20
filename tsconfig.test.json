@@ -8,5 +8,12 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["packages/*/test/**/*.ts", "vitest.config.ts"]
+  // Os testes importam de `../src`, entao este projeto tambem typecheca as
+  // fontes. As declaracoes ambiente (`gltf-validator.d.ts`) nao sao alcancadas
+  // por import nenhum, entao precisam entrar explicitamente.
+  "include": [
+    "packages/*/test/**/*.ts",
+    "packages/*/src/**/*.d.ts",
+    "vitest.config.ts"
+  ]
 }
