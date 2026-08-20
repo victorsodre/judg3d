@@ -1,0 +1,25 @@
+{
+  "name": "judg3d",
+  "version": "0.0.1",
+  "description": "Juiz de aceitacao deterministico para assets 3D. Placeholder \u2014 a versao utilizavel ainda nao foi publicada.",
+  "type": "module",
+  "bin": {
+    "judg3d": "bin.js"
+  },
+  "files": [
+    "bin.js",
+    "README.md"
+  ],
+  "keywords": [
+    "gltf",
+    "glb",
+    "3d",
+    "validation",
+    "qa",
+    "asset-pipeline"
+  ],
+  "license": "SEE LICENSE IN README.md",
+  "engines": {
+    "node": ">=22"
+  }
+}
