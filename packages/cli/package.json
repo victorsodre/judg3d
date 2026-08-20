@@ -1,0 +1,21 @@
+{
+  "name": "judg3d",
+  "version": "0.0.0",
+  "description": "Juiz de aceitacao para assets 3D. CLI pre-alpha.",
+  "type": "module",
+  "bin": {
+    "judg3d": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "dependencies": {
+    "@judg3d/core": "workspace:*",
+    "@judg3d/judge": "workspace:*",
+    "commander": "15.0.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@judg3d/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MCP server do judg3d. Placeholder: sem codigo ate a sessao que implementa judge_asset/render_views.",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@judg3d/judge",
+  "version": "0.0.0",
+  "description": "Motor de camadas do judg3d. v0: L1 SCHEMA via glTF Validator da Khronos.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "dependencies": {
+    "@judg3d/core": "workspace:*",
+    "gltf-validator": "2.0.0-dev.3.10"
+  }
+}

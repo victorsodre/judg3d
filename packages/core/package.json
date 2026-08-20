@@ -1,0 +1,22 @@
+{
+  "name": "@judg3d/core",
+  "version": "0.0.0",
+  "description": "Contrato Verdict/Violation, profile-as-code e envelope do judge-report do judg3d.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  }
+}
