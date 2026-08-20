@@ -1,0 +1,20 @@
+{
+  "id": "web-commerce",
+  "version": "0.1.0",
+  "profileFormat": 1,
+  "extends": null,
+  "layers": {
+    "schema": {
+      "enabled": true,
+      "failOn": "error",
+      "report": "warn",
+      "ignoredIssues": [],
+      "severityOverrides": {},
+      "maxIssues": 0
+    },
+    "profile": { "enabled": false },
+    "geometry": { "enabled": false },
+    "visual": { "enabled": false },
+    "semantic": { "enabled": false }
+  }
+}
