@@ -48,6 +48,26 @@ ser universal.
 | `layers.profile.budgets.maxDrawCalls` | Teto de draw calls. `null` desliga |
 | `layers.profile.budgets.maxTextureSize` | Maior lado de qualquer imagem, em pixels. `null` desliga |
 | `layers.profile.requireSelfContained` | Reprova recurso fora do container (`storage` diferente de `glb`, `buffer-view` ou `data-uri`) |
+| `layers.profile.severityByCode` | Codigo de violacao -> `error` ou `warn`. Sem entrada, a L2 emite `error` |
+
+### `severityByCode` — orcamento como gap, nao como reprovacao
+
+Nem todo dono de pipeline trata orcamento igual. Num catalogo de e-commerce,
+estourar poligono e reprovacao. Num loop de autoria, e um gap que se fecha
+antes de entregar — e reprovar a cada rodada intermediaria pararia o trabalho
+sem informar nada de novo.
+
+As duas leituras estao certas, e por isso a escolha e do profile:
+
+```json
+"severityByCode": { "MATERIALS_OVER_BUDGET": "warn" }
+```
+
+O default e `error`: **o silencio tem que ser pedido, nunca herdado.**
+
+`METRICS_UNAVAILABLE` e a unica excecao e nao pode ser rebaixado. Ele nao e um
+juizo sobre o asset — e o aviso de que nenhum juizo foi feito, e transforma-lo
+em aviso reconstruiria o falso PASS que a spec proibe.
 
 **`null` nao e `0`.** `null` e "sem teto"; `0` e "teto zero", que reprova
 qualquer asset. A distincao e explicita porque um campo esquecido nao pode

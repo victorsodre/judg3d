@@ -3,6 +3,7 @@ import type { GltfResource, GltfValidationInfo } from "gltf-validator";
 import type {
   MeshMetrics,
   ProfileLayerConfig,
+  Severity,
   Violation,
 } from "@judg3d/core";
 
@@ -49,6 +50,18 @@ export type ProfileLayerResult = {
   /** Metricas da L1 acrescidas do que a L2 consegue medir. */
   metrics: MeshMetrics;
 };
+
+/**
+ * Severidade de uma violacao desta camada. `error` por padrao: o silencio tem
+ * que ser pedido, nunca herdado.
+ *
+ * `METRICS_UNAVAILABLE` nao passa por aqui de proposito — ele nao e um juizo
+ * sobre o asset, e sim o aviso de que nenhum juizo foi feito, e rebaixa-lo a
+ * aviso reconstruiria o falso PASS que a spec proibe.
+ */
+function severityOf(code: string, config: ProfileLayerConfig): Severity {
+  return config.severityByCode[code] ?? "error";
+}
 
 /** Um limite do profile e a metrica correspondente. */
 type BudgetRule = {
@@ -168,7 +181,7 @@ function checkBudgets(
     .map((rule) => ({
       kind: "PROFILE" as const,
       code: rule.code,
-      severity: "error" as const,
+      severity: severityOf(rule.code, config),
       got: { metric: rule.metric, value: rule.value },
       want: { metric: rule.metric, max: rule.max },
     }));
@@ -198,7 +211,7 @@ function checkSelfContained(
     .map((resource) => ({
       kind: "PROFILE" as const,
       code: EXTERNAL_RESOURCE_CODE,
-      severity: "error" as const,
+      severity: severityOf(EXTERNAL_RESOURCE_CODE, config),
       nodePath: resource.pointer,
       got: { storage: resource.storage, uri: resource.uri },
       want: { storage: [...SELF_CONTAINED_STORAGE] },

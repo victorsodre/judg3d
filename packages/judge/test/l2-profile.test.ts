@@ -149,6 +149,7 @@ describe("L2 PROFILE — orcamento", () => {
         maxDrawCalls: null,
         maxTextureSize: null,
       },
+      severityByCode: {},
       requireSelfContained: true,
     });
     expect(violations).toEqual([]);
@@ -165,6 +166,7 @@ describe("L2 PROFILE — orcamento", () => {
         maxDrawCalls: null,
         maxTextureSize: null,
       },
+      severityByCode: {},
       requireSelfContained: true,
     });
     expect(violations.map((v) => v.code)).toEqual(["TRIANGLES_OVER_BUDGET"]);
@@ -184,6 +186,7 @@ describe("L2 PROFILE — orcamento", () => {
           maxDrawCalls: 60,
           maxTextureSize: null,
         },
+        severityByCode: {},
         requireSelfContained: true,
       },
     );
@@ -212,6 +215,7 @@ describe("L2 PROFILE — autocontencao", () => {
         maxDrawCalls: null,
         maxTextureSize: null,
       },
+      severityByCode: {},
       requireSelfContained: true,
     });
     expect(violations).toEqual([
@@ -237,6 +241,7 @@ describe("L2 PROFILE — autocontencao", () => {
         maxDrawCalls: null,
         maxTextureSize: null,
       },
+      severityByCode: {},
       requireSelfContained: false,
     });
     expect(violations).toEqual([]);
@@ -255,6 +260,7 @@ describe("L2 PROFILE — o que nao pode acontecer", () => {
         maxDrawCalls: null,
         maxTextureSize: null,
       },
+      severityByCode: {},
       requireSelfContained: true,
     });
     expect(violations.map((v) => v.code)).toEqual([METRICS_UNAVAILABLE_CODE]);
@@ -267,5 +273,59 @@ describe("L2 PROFILE — o que nao pode acontecer", () => {
     const a = await judge(asset, profile, OPTIONS);
     const b = await judge(asset, profile, OPTIONS);
     expect(JSON.stringify(a.report)).toBe(JSON.stringify(b.report));
+  });
+});
+
+describe("L2 PROFILE — severidade decidida pelo profile", () => {
+  const config = (severityByCode: Record<string, "error" | "warn">) => ({
+    enabled: true,
+    failOn: "error" as const,
+    budgets: {
+      maxTriangles: 4,
+      maxVertices: null,
+      maxMaterials: null,
+      maxDrawCalls: null,
+      maxTextureSize: null,
+    },
+    severityByCode,
+    requireSelfContained: true,
+  });
+
+  it("emite error por padrao — o silencio tem que ser pedido", () => {
+    const { violations } = runProfileLayer(info(), L1_METRICS, config({}));
+    expect(violations[0]?.severity).toBe("error");
+  });
+
+  it("rebaixa para aviso quando o profile pede, e o asset passa", async () => {
+    const { violations } = runProfileLayer(
+      info(),
+      L1_METRICS,
+      config({ TRIANGLES_OVER_BUDGET: "warn" }),
+    );
+    expect(violations[0]?.severity).toBe("warn");
+
+    // O caso de uso real: num loop de autoria, orcamento estourado numa rodada
+    // intermediaria e um gap a fechar, nao motivo para parar o trabalho.
+    const { verdict } = await judge(
+      await readAsset(fixture("valido.glb")),
+      withBudgets(
+        { maxTriangles: 4 },
+        { severityByCode: { TRIANGLES_OVER_BUDGET: "warn" } },
+      ),
+      OPTIONS,
+    );
+    expect(verdict.pass).toBe(true);
+    expect(verdict.violations.map((v) => v.code)).toEqual([
+      "TRIANGLES_OVER_BUDGET",
+    ]);
+  });
+
+  it("METRICS_UNAVAILABLE nao pode ser rebaixado", () => {
+    const { violations } = runProfileLayer(
+      undefined,
+      L1_METRICS,
+      config({ METRICS_UNAVAILABLE: "warn" }),
+    );
+    expect(violations[0]?.severity).toBe("error");
   });
 });

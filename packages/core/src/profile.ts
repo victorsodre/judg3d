@@ -66,6 +66,16 @@ const profileLayerSchema = z.strictObject({
   failOn: failOnSchema.default("error"),
   budgets: budgetSchema.default(NO_BUDGET),
   /**
+   * Codigo de violacao -> severidade. Sem entrada, a L2 emite `error`.
+   *
+   * Existe porque nem todo dono de pipeline trata orcamento igual: para um
+   * catalogo de e-commerce, estourar poligono e reprovacao; para um loop de
+   * autoria, e um gap que se fecha antes de entregar, e reprovar a cada rodada
+   * intermediaria pararia o trabalho sem informar nada de novo. As duas
+   * leituras estao certas, e por isso a escolha e do profile.
+   */
+  severityByCode: z.record(z.string(), failOnSchema).default({}),
+  /**
    * Recurso fora do container reprova. Um GLB com URI externa funciona na
    * maquina de quem exportou e quebra em qualquer outra — e o validator nao
    * trata isso como erro, porque nao e.

@@ -95,6 +95,17 @@ quando o asset não tem imagem.
 JSON do glTF. Não fecha a H3, mas move a série de métricas de "35 materiais" para
 "35 materiais, 12 texturas, maior 4096" — e a segunda frase é acionável.
 
+### `severityByCode` — a severidade sai do profile
+
+A primeira versão desta camada emitia toda violação como `error`, e isso a
+tornava inutilizável no próprio loop que a motivou: o `tumbler-three` trata
+orçamento estourado como **gap a fechar antes da entrega**, não como motivo
+para parar a rodada. Com severidade fixa, um modelo de 45 materiais reprovaria
+todas as rodadas seguintes sem dizer nada que a primeira já não tivesse dito.
+
+A escolha passou para o profile, com `error` como padrão — o silêncio tem que
+ser pedido, nunca herdado. `METRICS_UNAVAILABLE` não pode ser rebaixado.
+
 ### `got`/`want` visível na saída humana
 
 A primeira violação de orçamento imprimiu só `MATERIALS_OVER_BUDGET`, sem o
