@@ -42,6 +42,13 @@ const REPORT_LEVEL_CEILING: Readonly<Record<ReportLevel, GltfIssueSeverity>> = {
  */
 export const UNPARSEABLE_CODE = "GLTF_UNPARSEABLE";
 
+/**
+ * O relatorio foi cortado pelo `maxPerCode` do profile. Nunca e silencioso:
+ * um laudo truncado sem aviso le como "esta tudo aqui", e a diferenca entre
+ * "cinco ocorrencias" e "seiscentas mil" muda a decisao de quem le.
+ */
+export const TRUNCATED_CODE = "ISSUES_TRUNCATED";
+
 export type SchemaLayerResult = {
   violations: Violation[];
   metrics: MeshMetrics;
@@ -72,15 +79,67 @@ export async function runSchemaLayer(
   }
 
   const ceiling = REPORT_LEVEL_CEILING[config.report];
-  const violations = report.issues.messages
-    .filter((issue) => issue.severity <= ceiling)
-    .map((issue) => toViolation(issue, config));
+  const relevantes = report.issues.messages.filter(
+    (issue) => issue.severity <= ceiling,
+  );
 
   return {
-    violations,
+    violations: aplicarTetoPorCodigo(relevantes, config),
     metrics: toMetrics(report.info),
     report,
   };
+}
+
+/**
+ * Mantem no maximo `maxPerCode` violacoes de cada codigo, na ordem em que o
+ * validator as produziu, e declara o que ficou de fora.
+ *
+ * A ordem importa: o validator emite por posicao no arquivo, entao as
+ * primeiras N de um codigo apontam os primeiros lugares onde o problema
+ * aparece — que e por onde alguem comeca a consertar.
+ */
+export function aplicarTetoPorCodigo(
+  issues: readonly GltfIssue[],
+  config: SchemaLayerConfig,
+): Violation[] {
+  if (config.maxPerCode === 0) {
+    return issues.map((issue) => toViolation(issue, config));
+  }
+
+  const vistos = new Map<string, number>();
+  const cortados = new Map<string, number>();
+  const violations: Violation[] = [];
+
+  for (const issue of issues) {
+    const n = (vistos.get(issue.code) ?? 0) + 1;
+    vistos.set(issue.code, n);
+    if (n <= config.maxPerCode) {
+      violations.push(toViolation(issue, config));
+    } else {
+      cortados.set(issue.code, (cortados.get(issue.code) ?? 0) + 1);
+    }
+  }
+
+  if (cortados.size > 0) {
+    // Ordenado por volume: o codigo que mais inundou o laudo vem primeiro, e
+    // `Map` sozinho daria ordem de insercao, que nao e determinista o
+    // suficiente para o invariante 1 quando a entrada muda de ordem.
+    const porVolume = [...cortados.entries()].sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+    );
+    violations.push({
+      kind: "SCHEMA",
+      code: TRUNCATED_CODE,
+      severity: "warn",
+      got: {
+        message: `${porVolume.reduce((s, [, n]) => s + n, 0)} violacoes omitidas alem do teto de ${config.maxPerCode} por codigo.`,
+        omitidas: Object.fromEntries(porVolume),
+      },
+      want: { maxPerCode: config.maxPerCode },
+    });
+  }
+
+  return violations;
 }
 
 function toViolation(issue: GltfIssue, config: SchemaLayerConfig): Violation {

@@ -138,6 +138,58 @@ extensões") destrava de uma vez:
 
 Sem ela, a L2 fica no que o `info` entrega, que é o que está implementado.
 
+## O primeiro asset de produção derrubou o juiz
+
+Em 22/08/2026 o `judg3d` rodou pela primeira vez contra um GLB de verdade —
+202 326 faces, 14 materiais, 20 texturas, 35 MB — em vez das caixas de 12
+triângulos e das cenas geradas por código.
+
+Ele quebrou:
+
+```
+judg3d: falha inesperada — RangeError: Maximum call stack size exceeded
+Isto e uma falha de infraestrutura (exit 2), nao uma reprovacao do asset.
+```
+
+**A classificação estava certa** e vale registrar como acerto: exit 2, infra,
+não reprovação. O invariante 3 funcionou exatamente como escrito, num caminho
+que nunca tinha sido exercido.
+
+### A causa
+
+`violations.push(...result.violations)`.
+
+O spread passa **cada elemento como argumento**, e o número de argumentos de uma
+chamada tem teto — na prática entre 60 e 125 mil no V8. O validator devolveu
+**632 379** violações para aquele asset.
+
+> O tamanho da entrada do usuário nunca pode virar tamanho de lista de
+> argumentos. Um laço não tem teto; uma chamada tem.
+
+O bug estava lá desde a L1. Nenhum fixture tinha mais de quatro violações, então
+nada o exercia — a mesma forma do H29 e do H33: **a ferramenta não é conferida
+contra o caso que ela existe para tratar.**
+
+### O segundo defeito, que só apareceu depois de consertar o primeiro
+
+Das 632 379 violações, **632 332 eram o mesmo código**
+(`ACCESSOR_JOINTS_USED_ZERO_WEIGHT`). Um relatório com seiscentas mil linhas
+idênticas não é acionável nem para agente nem para pessoa — o invariante 4
+falha por volume, não por conteúdo.
+
+`maxIssues` não resolvia: ele corta o **total**, então um teto de 500 devolveria
+500 cópias do código mais frequente e **nenhum** dos outros quatro.
+
+Entrou `maxPerCode`, que preserva a **diversidade** — o que torna um laudo
+acionável não é o número de linhas, é quantos problemas distintos ele nomeia.
+O que for cortado sai declarado numa violação `ISSUES_TRUNCATED` com a contagem
+por código, porque corte silencioso lê como *"está tudo aqui"*.
+
+Resultado no mesmo asset: relatório de **32 KB com 65 violações**, cobrindo os
+cinco códigos distintos, em vez de um arquivo de centenas de megabytes.
+
+Default `0` (ilimitado): o comportamento anterior não muda para quem não pediu.
+
 ## O achado estrutural — e ele não é sobre 3D
 
 Das 35 hipóteses, a maioria **não** pede um juiz mais inteligente:

@@ -10,7 +10,8 @@
       "report": "warn",
       "ignoredIssues": [],
       "severityOverrides": {},
-      "maxIssues": 0
+      "maxIssues": 0,
+      "maxPerCode": 50
     },
     "profile": {
       "enabled": true,
@@ -24,8 +25,14 @@
       },
       "requireSelfContained": true
     },
-    "geometry": { "enabled": false },
-    "visual": { "enabled": false },
-    "semantic": { "enabled": false }
+    "geometry": {
+      "enabled": false
+    },
+    "visual": {
+      "enabled": false
+    },
+    "semantic": {
+      "enabled": false
+    }
   }
 }

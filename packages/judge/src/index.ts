@@ -1,4 +1,5 @@
 export {
+  append,
   judge,
   readAsset,
   type JudgeInput,
@@ -9,6 +10,8 @@ export {
 export {
   runSchemaLayer,
   UNPARSEABLE_CODE,
+  TRUNCATED_CODE,
+  aplicarTetoPorCodigo,
   type SchemaLayerResult,
 } from "./layers/l1-schema.js";
 

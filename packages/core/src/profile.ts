@@ -34,6 +34,20 @@ const schemaLayerSchema = z.strictObject({
   severityOverrides: z.record(z.string(), z.int().min(0).max(3)).default({}),
   /** 0 = ilimitado. */
   maxIssues: z.int().min(0).default(0),
+  /**
+   * Teto de violacoes reportadas POR CODIGO. 0 = ilimitado.
+   *
+   * Diferente do `maxIssues`, que corta o total e por isso deixa passar so o
+   * codigo mais frequente. Um asset real devolveu 632 379 issues das quais
+   * 632 332 eram o mesmo `ACCESSOR_JOINTS_USED_ZERO_WEIGHT`: com teto global
+   * de 500 o relatorio teria 500 copias de um problema e nenhum dos outros
+   * quatro. O teto por codigo preserva a DIVERSIDADE, que e o que torna um
+   * laudo acionavel.
+   *
+   * O que for cortado sai declarado numa violacao `ISSUES_TRUNCATED` — corte
+   * silencioso le como "esta tudo aqui".
+   */
+  maxPerCode: z.int().min(0).default(0),
 });
 
 /**

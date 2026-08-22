@@ -85,14 +85,14 @@ export async function judge(
       input.uri,
       profile.layers.schema,
     );
-    violations.push(...result.violations);
+    append(violations, result.violations);
     metrics = result.metrics;
     info = result.report?.info;
   }
 
   if (profile.layers.profile.enabled) {
     const result = runProfileLayer(info, metrics, profile.layers.profile);
-    violations.push(...result.violations);
+    append(violations, result.violations);
     metrics = result.metrics;
   }
 
@@ -108,6 +108,24 @@ export async function judge(
     verdict,
     report: buildReport(input, loaded, layers, verdict, options),
   };
+}
+
+/**
+ * Concatena sem espalhar.
+ *
+ * `alvo.push(...origem)` passa cada elemento como ARGUMENTO, e o numero de
+ * argumentos de uma chamada tem teto — na pratica algo entre 60 e 125 mil no
+ * V8. Um GLB de producao de 202 mil faces produziu **632 379** violacoes no
+ * validator da Khronos e derrubou o comando com `RangeError: Maximum call
+ * stack size exceeded`.
+ *
+ * O tamanho da entrada do usuario nunca pode virar tamanho de lista de
+ * argumentos. Um laco nao tem teto.
+ */
+export function append<T>(alvo: T[], origem: readonly T[]): void {
+  for (const item of origem) {
+    alvo.push(item);
+  }
 }
 
 /**

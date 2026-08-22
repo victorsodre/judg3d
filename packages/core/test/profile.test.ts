@@ -38,6 +38,9 @@ describe("parseProfile", () => {
       ignoredIssues: [],
       severityOverrides: {},
       maxIssues: 0,
+      // 0 = ilimitado: o default preserva o comportamento anterior ao teto
+      // por codigo, que entrou depois de um asset real derrubar o CLI.
+      maxPerCode: 0,
     });
   });
 
