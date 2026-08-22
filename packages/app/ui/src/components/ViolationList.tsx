@@ -1,4 +1,4 @@
-import { messageFromGot } from "../api";
+import { violationDetail } from "../api";
 import type { Violation } from "../types";
 
 type ViolationListProps = {
@@ -15,7 +15,10 @@ export function ViolationList({ violations }: ViolationListProps) {
   return (
     <ul className="violations">
       {violations.map((violation) => {
-        const message = messageFromGot(violation.got);
+        // `violationDetail`, e nao so a mensagem: uma violacao de orcamento
+        // nao traz `message`, e mostrar so o codigo esconde o numero que a
+        // torna acionavel.
+        const message = violationDetail(violation);
         return (
           <li
             key={`${violation.code}:${violation.nodePath ?? ""}:${message ?? ""}`}

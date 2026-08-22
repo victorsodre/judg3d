@@ -26,26 +26,11 @@ export async function judgeAsset(
   return body;
 }
 
-export function messageFromGot(got: unknown): string | undefined {
-  if (typeof got === "object" && got !== null && "message" in got) {
-    const { message } = got;
-    if (typeof message === "string") {
-      return message;
-    }
-  }
-  return undefined;
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${String(bytes)} B`;
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-export function shortHash(hex: string): string {
-  return hex.slice(0, 12);
-}
+// `messageFromGot`, `formatBytes` e `shortHash` viviam aqui, duplicados. Agora
+// vem de `@judg3d/core/present`, que e o unico modulo do core sem `node:` e
+// existe exatamente para ser importado pelo browser.
+export {
+  formatBytes,
+  shortHash,
+  violationDetail,
+} from "@judg3d/core/present";

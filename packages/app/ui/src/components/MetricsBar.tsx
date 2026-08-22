@@ -13,6 +13,14 @@ export function MetricsBar({ metrics, layers }: MetricsBarProps) {
     { label: "draw calls", value: String(metrics.drawCalls) },
   ];
 
+  if (metrics.textures !== undefined) {
+    const { count, maxSize } = metrics.textures;
+    cells.push({
+      label: "texturas",
+      value: `${String(count)} · até ${String(maxSize)}px`,
+    });
+  }
+
   if (metrics.dimensions !== undefined) {
     const { x, y, z } = metrics.dimensions;
     cells.push({

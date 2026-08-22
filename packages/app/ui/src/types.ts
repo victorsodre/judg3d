@@ -1,52 +1,23 @@
-/** Tipos do envelope HTTP — espelho do contrato, sem importar Node no browser. */
-
-export type Severity = "error" | "warn";
-
-export type LayerKind =
-  | "SCHEMA"
-  | "PROFILE"
-  | "GEOMETRY"
-  | "VISUAL"
-  | "SEMANTIC";
-
-export type Violation = {
-  kind: LayerKind;
-  code: string;
-  severity: Severity;
-  nodePath?: string;
-  view?: number;
-  got: unknown;
-  want: unknown;
-};
-
-export type MeshMetrics = {
-  triangles: number;
-  vertices: number;
-  materials: number;
-  drawCalls: number;
-  dimensions?: { x: number; y: number; z: number };
-  vramEstimateBytes?: number;
-};
-
-export type Verdict = {
-  pass: boolean;
-  violations: Violation[];
-  views: unknown[];
-  metrics: MeshMetrics;
-};
-
-export type JudgeReport = {
-  judg3dVersion: string;
-  asset: { uri: string; sha256: string; bytes: number };
-  profile: { id: string; version: string; sha256: string };
-  engine: {
-    gltfValidator: string;
-    node: string;
-    layers: LayerKind[];
-  };
-  generatedAt?: string;
-  verdict: Verdict;
-};
+/**
+ * Tipos do envelope HTTP. **Reexporta o contrato, nao o copia.**
+ *
+ * A versao anterior era um espelho escrito a mao, com a justificativa de nao
+ * arrastar `node:` para o browser. A justificativa estava certa e a solucao,
+ * errada: `import type` e apagado na compilacao e nao gera import nenhum em
+ * runtime, entao o espelho so servia para divergir — e divergiu, ficando sem
+ * `MeshMetrics.textures` no dia em que a L2 passou a medi-lo.
+ *
+ * Valor (nao tipo) vem de `@judg3d/core/present`, o unico modulo do core sem
+ * `node:`. Importar valor do root puxaria `zod`, `node:fs` e `node:crypto`.
+ */
+export type {
+  LayerKind,
+  MeshMetrics,
+  Severity,
+  Verdict,
+  Violation,
+  JudgeReport,
+} from "@judg3d/core";
 
 export type ProfileSummary = {
   id: string;
@@ -58,7 +29,7 @@ export type ProfileSummary = {
 export type JudgeSuccess = {
   ok: true;
   exitHint: 0 | 1;
-  report: JudgeReport;
+  report: import("@judg3d/core").JudgeReport;
   serialized: string;
 };
 

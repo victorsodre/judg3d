@@ -18,16 +18,9 @@ export const red = (text: string): string => wrap(31, text);
 export const yellow = (text: string): string => wrap(33, text);
 export const green = (text: string): string => wrap(32, text);
 
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-  const kb = bytes / 1024;
-  if (kb < 1024) {
-    return `${kb.toFixed(1).replace(".", ",")} KB`;
-  }
-  return `${(kb / 1024).toFixed(1).replace(".", ",")} MB`;
-}
+// `formatBytes` mora em `@judg3d/core/present`, compartilhado com a app local.
+// Duas copias divergiram uma vez: o mesmo asset saia `1,6 KB` aqui e `1.6 KB`
+// na UI.
 
 export function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;

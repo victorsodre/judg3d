@@ -9,9 +9,15 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./present": {
+      "types": "./dist/present.d.ts",
+      "default": "./dist/present.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=22",
     "pnpm": ">=11"

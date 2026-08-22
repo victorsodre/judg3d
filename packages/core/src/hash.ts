@@ -10,7 +10,5 @@ export function sha256Hex(bytes: Uint8Array | string): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-/** Prefixo curto para exibicao humana. */
-export function shortHash(hex: string): string {
-  return hex.slice(0, 12);
-}
+// `shortHash` mudou para `present.ts`: ele nao precisa de `node:crypto` e o
+// browser precisa dele. Continua exportado pelo root do pacote.

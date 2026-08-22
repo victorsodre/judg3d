@@ -58,6 +58,13 @@ assim que tem que ser.
   de verdade — o runtime que vale a pena é o roubado (Khronos), não o npm.
 - **Fixtures são imutáveis.** Nunca edite um arquivo em `fixtures/` no lugar.
   Caso novo é arquivo novo, com proveniência e sha256 em `fixtures/README.md`.
+- **Apresentação compartilhada mora em `packages/core/src/present.ts`.**
+  É o **único** módulo do core sem `node:`, publicado no subpath
+  `@judg3d/core/present` para que o browser possa importar valor dele.
+  Formatação de tamanho, hash curto e a linha `got`/`want` de uma violação
+  saem de lá — CLI e app local importam, nunca copiam. Se a função precisa de
+  `node:`, ela não pertence a esse arquivo. Tipos podem vir do root com
+  `import type`, que é apagado na compilação.
 - **Não reimplemente o que a Khronos já faz.** Validator, parser de formato,
   renderer: nada disso é código nosso. O valor está no profile-as-code e no
   relatório que o agente lê.

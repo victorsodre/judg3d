@@ -20,7 +20,14 @@ export {
   type ExitCode,
 } from "./exit-codes.js";
 
-export { sha256Hex, shortHash } from "./hash.js";
+export { sha256Hex } from "./hash.js";
+
+export {
+  formatBytes,
+  messageOf,
+  shortHash,
+  violationDetail,
+} from "./present.js";
 
 export {
   IMPLEMENTED_LAYERS,
