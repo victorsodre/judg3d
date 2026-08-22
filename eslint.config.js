@@ -4,7 +4,11 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/node_modules/**"],
+    ignores: [
+      "**/dist/**",
+      "**/client-dist/**",
+      "**/node_modules/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -18,6 +22,8 @@ export default tseslint.config(
           "./packages/core/tsconfig.json",
           "./packages/judge/tsconfig.json",
           "./packages/cli/tsconfig.json",
+          "./packages/app/tsconfig.json",
+          "./packages/app/tsconfig.ui.json",
         ],
         tsconfigRootDir: import.meta.dirname,
       },
@@ -27,6 +33,12 @@ export default tseslint.config(
         "error",
         { allowNumber: true },
       ],
+    },
+  },
+  {
+    files: ["packages/app/ui/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: globals.browser,
     },
   },
   {

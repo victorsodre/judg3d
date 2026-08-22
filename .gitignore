@@ -1,5 +1,6 @@
 node_modules/
 dist/
+client-dist/
 *.tsbuildinfo
 judge-report.json
 .DS_Store

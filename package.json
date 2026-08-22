@@ -7,11 +7,14 @@
     "pnpm": ">=11"
   },
   "scripts": {
-    "build": "tsc --build",
-    "typecheck": "tsc --build --force && tsc -p tsconfig.test.json",
+    "build": "tsc --build && pnpm --filter @judg3d/app build:ui",
+    "typecheck": "tsc --build --force && tsc -p tsconfig.test.json && tsc -p packages/app/tsconfig.ui.json --noEmit",
     "lint": "eslint .",
     "test": "tsc --build && vitest run",
     "judg3d": "node packages/cli/dist/index.js",
+    "app:dev": "pnpm --filter @judg3d/app dev",
+    "app:build": "pnpm --filter @judg3d/app build",
+    "app:start": "pnpm --filter @judg3d/app start",
     "fixtures:fetch": "node fixtures/scripts/fetch-khronos.mjs",
     "fixtures:broken": "node fixtures/scripts/make-quebrado.mjs"
   },
@@ -23,5 +26,10 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
     "vitest": "4.1.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

@@ -1,0 +1,36 @@
+{
+  "name": "@judg3d/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "App local do judg3d: UI + API sobre @judg3d/judge.",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "scripts": {
+    "build": "tsc --build && vite build",
+    "build:server": "tsc --build",
+    "build:ui": "vite build",
+    "dev": "concurrently -k -n server,ui -c teal,magenta \"pnpm run dev:server\" \"pnpm run dev:ui\"",
+    "dev:server": "pnpm run build:server && JUDG3D_APP_SERVE_CLIENT=0 node --watch dist/index.js",
+    "dev:ui": "vite",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --build --force && tsc -p tsconfig.ui.json --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.19.6",
+    "@judg3d/core": "workspace:*",
+    "@judg3d/judge": "workspace:*",
+    "hono": "4.11.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.1.2",
+    "concurrently": "9.2.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "vite": "7.3.1"
+  }
+}
