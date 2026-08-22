@@ -62,11 +62,62 @@ function renderViolation(violation: Violation, codeWidth: number): string[] {
     violation.nodePath === undefined ? "" : `  ${dim(violation.nodePath)}`;
   const lines = [`${head}${where}`];
 
-  const message = messageOf(violation.got);
-  if (message !== undefined) {
-    lines.push(`         ${dim(message)}`);
+  const detail = messageOf(violation.got) ?? comparison(violation);
+  if (detail !== undefined) {
+    lines.push(`         ${dim(detail)}`);
   }
   return lines;
+}
+
+/**
+ * `got`/`want` numa linha, para violacoes que nao trazem `message`.
+ *
+ * Invariante 4 da spec: toda violacao e acionavel — codigo, local e got/want.
+ * O codigo sozinho nao e acionavel: `MATERIALS_OVER_BUDGET` nao diz se o asset
+ * tem 21 materiais ou 350. Antes da L2 nenhuma violacao chegava aqui sem
+ * `message`, e o buraco so apareceu quando uma chegou.
+ */
+function comparison(violation: Violation): string | undefined {
+  const got = flatten(violation.got);
+  if (got === undefined) {
+    return undefined;
+  }
+  // Pares identicos nos dois lados sao contexto repetido, nao contraste.
+  const want = flatten(violation.want, asRecord(violation.got));
+  return want === undefined ? got : `${got}  →  esperado ${want}`;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function flatten(value: unknown, omitSameAs: Record<string, unknown> = {}): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => flatten(item) ?? "—").join(", ");
+  }
+  if (typeof value === "object") {
+    const parts = Object.entries(value)
+      .filter(([key, item]) => item !== undefined && omitSameAs[key] !== item)
+      .map(([key, item]) => `${key} ${flatten(item) ?? "—"}`);
+    return parts.length > 0 ? parts.join(" · ") : undefined;
+  }
+  // `got` e `want` sao `unknown` no contrato de proposito — cada camada poe o
+  // que faz sentido. Sem lista explicita, um objeto exotico viraria
+  // "[object Object]" na saida, que e pior que nao imprimir nada.
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+  return undefined;
 }
 
 function messageOf(got: unknown): string | undefined {
@@ -87,6 +138,10 @@ function renderMetrics(report: JudgeReport): string {
     plural(metrics.materials, "material", "materiais"),
     plural(metrics.drawCalls, "draw call", "draw calls"),
   ];
+  if (metrics.textures !== undefined) {
+    const { count, maxSize } = metrics.textures;
+    parts.push(`${plural(count, "textura", "texturas")} até ${maxSize}px`);
+  }
   if (metrics.dimensions !== undefined) {
     const { x, y, z } = metrics.dimensions;
     parts.push(`${x}×${y}×${z}`);

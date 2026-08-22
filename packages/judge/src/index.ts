@@ -12,4 +12,11 @@ export {
   type SchemaLayerResult,
 } from "./layers/l1-schema.js";
 
+export {
+  runProfileLayer,
+  EXTERNAL_RESOURCE_CODE,
+  METRICS_UNAVAILABLE_CODE,
+  type ProfileLayerResult,
+} from "./layers/l2-profile.js";
+
 export { engineVersions } from "./engine.js";

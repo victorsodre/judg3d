@@ -30,6 +30,7 @@ USD, UE, Unity: fora da v0 (entram via export no futuro, não via engine).
 
 - L1 SCHEMA — Validator: glTF válido.
 - L2 PROFILE — Auditor + extensões: texel density, UV, PBR ranges, budgets, dimensões.
+  **Implementada em parte:** budgets (triângulos, vértices, materiais, draw calls, maior textura) e autocontenção (nenhum recurso fora do container). Texel density, UV e PBR ranges precisam do JSON do glTF, que o `info` do validator não expõe — ver `docs/calibracao-tumbler.md`.
 - L3 GEOMETRY — asserts próprios: manifold/watertight quando o perfil exigir, normais invertidas, triângulos degenerados, escala real vs declarada, pivô, hierarquia vazia, textura ausente.
 - L4 VISUAL — N views determinísticas (rig de luz neutro vendorizado, câmeras fixas) vs baseline: SSIM + pixel ratio por view, máscara e threshold do perfil.
 - L5 SEMANTIC (opcional, nunca gate sozinho) — VLM com rubrica estreita, peso baixo, sempre acompanhado do porquê determinístico.
@@ -41,8 +42,15 @@ export type Verdict = {
   pass: boolean;
   violations: Violation[];
   views: AnnotatedRender[];   // stills com bbox — é isto que o agente lê
-  metrics: MeshMetrics;       // tris, materiais, draw calls, dims, vram estimada
+  metrics: MeshMetrics;       // tris, materiais, draw calls, texturas, dims, vram estimada
 };
+
+// MeshMetrics.textures?: { count, maxSize }  — acrescentado em 22/08/2026.
+// Motivo, com evidencia: numa calibracao de 78 rodadas contra um pipeline de
+// autoria por agente, a mudanca que mais alterou a imagem produziu duas linhas
+// IDENTICAS na serie de metricas. Contar materiais nao diz nada sobre o
+// conteudo deles, e resolucao e o primeiro atributo de conteudo mensuravel sem
+// abrir o JSON do glTF. Detalhe em docs/calibracao-tumbler.md.
 
 export type Violation = {
   kind: "SCHEMA" | "PROFILE" | "GEOMETRY" | "VISUAL" | "SEMANTIC";

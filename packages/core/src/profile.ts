@@ -37,7 +37,44 @@ const schemaLayerSchema = z.strictObject({
 });
 
 /**
- * L2-L5 ainda nao existem. Ficam declaradas para que o formato do profile nao
+ * Orcamento do asset. `null` desliga o limite — e a diferenca entre "sem teto"
+ * e "teto zero" precisa ser explicita, senao um campo esquecido reprova tudo.
+ */
+const budgetSchema = z.strictObject({
+  maxTriangles: z.int().min(0).nullable().default(null),
+  maxVertices: z.int().min(0).nullable().default(null),
+  maxMaterials: z.int().min(0).nullable().default(null),
+  maxDrawCalls: z.int().min(0).nullable().default(null),
+  /** Maior lado, em pixels, de qualquer imagem do asset. */
+  maxTextureSize: z.int().min(0).nullable().default(null),
+});
+
+const NO_BUDGET = {
+  maxTriangles: null,
+  maxVertices: null,
+  maxMaterials: null,
+  maxDrawCalls: null,
+  maxTextureSize: null,
+} as const;
+
+/**
+ * L2 PROFILE. Orcamento e autocontencao — as duas checagens que a inspecao
+ * estatica do relatorio do validator ja permite, sem abrir o glTF.
+ */
+const profileLayerSchema = z.strictObject({
+  enabled: z.boolean(),
+  failOn: failOnSchema.default("error"),
+  budgets: budgetSchema.default(NO_BUDGET),
+  /**
+   * Recurso fora do container reprova. Um GLB com URI externa funciona na
+   * maquina de quem exportou e quebra em qualquer outra — e o validator nao
+   * trata isso como erro, porque nao e.
+   */
+  requireSelfContained: z.boolean().default(true),
+});
+
+/**
+ * L3-L5 ainda nao existem. Ficam declaradas para que o formato do profile nao
  * mude quando entrarem, e para que habilitar uma delas hoje de erro de infra
  * em vez de ser ignorado em silencio.
  */
@@ -54,7 +91,7 @@ export const profileSchema = z.strictObject({
   extends: z.string().min(1).nullable(),
   layers: z.strictObject({
     schema: schemaLayerSchema,
-    profile: placeholderLayerSchema,
+    profile: profileLayerSchema,
     geometry: placeholderLayerSchema,
     visual: placeholderLayerSchema,
     semantic: placeholderLayerSchema,
@@ -63,6 +100,8 @@ export const profileSchema = z.strictObject({
 
 export type Profile = z.infer<typeof profileSchema>;
 export type SchemaLayerConfig = z.infer<typeof schemaLayerSchema>;
+export type ProfileLayerConfig = z.infer<typeof profileLayerSchema>;
+export type Budgets = z.infer<typeof budgetSchema>;
 export type LayerKey = keyof Profile["layers"];
 
 /** Chave do profile -> camada do contrato. */
@@ -77,6 +116,7 @@ export const LAYER_KEY_TO_KIND: Readonly<Record<LayerKey, LayerKind>> = {
 /** O que o judg3d sabe julgar hoje. Cresce uma camada por sessao. */
 export const IMPLEMENTED_LAYERS: ReadonlySet<LayerKind> = new Set<LayerKind>([
   "SCHEMA",
+  "PROFILE",
 ]);
 
 export type LoadedProfile = {

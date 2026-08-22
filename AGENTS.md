@@ -36,7 +36,7 @@ pnpm fixtures:fetch # rebaixa os GLBs da Khronos e confere sha256
 | Camada | Estado | Onde |
 |--------|--------|------|
 | L1 SCHEMA | pronta | `packages/judge/src/layers/l1-schema.ts` |
-| L2 PROFILE | não implementada | — |
+| L2 PROFILE | pronta (orçamento + autocontenção) | `packages/judge/src/layers/l2-profile.ts` |
 | L3 GEOMETRY | não implementada | — |
 | L4 VISUAL | não implementada | — |
 | L5 SEMANTIC | não implementada | — |
@@ -63,7 +63,9 @@ assim que tem que ser.
   relatório que o agente lê.
 - **Nunca invente campo no contrato.** `Verdict`, `Violation`, `MeshMetrics` e
   `AnnotatedRender` são a transcrição da spec. Metadado novo vai no envelope
-  `JudgeReport`, não dentro do `Verdict`.
+  `JudgeReport`, não dentro do `Verdict`. Campo novo no contrato exige **mudar
+  a spec primeiro**, com a evidência que o justifica — foi assim que
+  `MeshMetrics.textures` entrou (ver `docs/calibracao-tumbler.md`).
 - Idioma: docs e mensagens em pt-BR, identificadores e códigos de violação em
   inglês.
 - Commits convencionais, pequenos, um por etapa.

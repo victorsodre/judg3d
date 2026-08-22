@@ -1,5 +1,8 @@
 import { readFile } from "node:fs/promises";
-import { version as gltfValidatorVersion } from "gltf-validator";
+import {
+  version as gltfValidatorVersion,
+  type GltfValidationInfo,
+} from "gltf-validator";
 
 import {
   EMPTY_METRICS,
@@ -12,11 +15,13 @@ import {
   type LayerKind,
   type LoadedProfile,
   type MeshMetrics,
+  type Profile,
   type Verdict,
   type Violation,
 } from "@judg3d/core";
 
 import { runSchemaLayer } from "./layers/l1-schema.js";
+import { runProfileLayer } from "./layers/l2-profile.js";
 
 /**
  * `Verdict = judge(asset, profile)` — funcao pura no que importa: os mesmos
@@ -72,6 +77,7 @@ export async function judge(
   const layers = enabledLayers(profile);
   const violations: Violation[] = [];
   let metrics: MeshMetrics = { ...EMPTY_METRICS };
+  let info: GltfValidationInfo | undefined;
 
   if (profile.layers.schema.enabled) {
     const result = await runSchemaLayer(
@@ -81,10 +87,17 @@ export async function judge(
     );
     violations.push(...result.violations);
     metrics = result.metrics;
+    info = result.report?.info;
+  }
+
+  if (profile.layers.profile.enabled) {
+    const result = runProfileLayer(info, metrics, profile.layers.profile);
+    violations.push(...result.violations);
+    metrics = result.metrics;
   }
 
   const verdict: Verdict = {
-    pass: computePass(violations, profile.layers.schema.failOn),
+    pass: computePass(violations, profile),
     violations,
     // Views entram com a camada VISUAL (L4), na sessao do rasterizador.
     views: [],
@@ -100,12 +113,28 @@ export async function judge(
 /**
  * Invariante 2: quem decide o que reprova e o profile. `failOn: "error"` deixa
  * avisos passarem; `failOn: "warn"` reprova neles tambem.
+ *
+ * O `failOn` e **por camada**, e cada violacao carrega o `kind` de quem a
+ * emitiu. Um profile que tolera aviso de schema num asset de terceiro nao
+ * deveria, por isso, tolerar aviso de orcamento — sao decisoes diferentes e
+ * amarra-las esconderia uma delas.
  */
-function computePass(violations: readonly Violation[], failOn: FailOn): boolean {
-  if (failOn === "warn") {
-    return violations.length === 0;
-  }
-  return !violations.some((violation) => violation.severity === "error");
+function computePass(violations: readonly Violation[], profile: Profile): boolean {
+  // Espalhado condicionalmente, e nao com `undefined`: sob
+  // `exactOptionalPropertyTypes` a chave ausente e a chave com valor undefined
+  // sao coisas diferentes, e aqui a diferenca e real — camada desligada nao tem
+  // failOn nenhum.
+  const failOnByKind: Partial<Record<LayerKind, FailOn>> = {
+    SCHEMA: profile.layers.schema.failOn,
+    ...(profile.layers.profile.enabled
+      ? { PROFILE: profile.layers.profile.failOn }
+      : {}),
+  };
+
+  return !violations.some((violation) => {
+    const failOn = failOnByKind[violation.kind] ?? "error";
+    return failOn === "warn" || violation.severity === "error";
+  });
 }
 
 function buildReport(

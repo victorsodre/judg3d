@@ -32,10 +32,12 @@ export {
   parseProfile,
   profileSchema,
   reportLevelSchema,
+  type Budgets,
   type FailOn,
   type LayerKey,
   type LoadedProfile,
   type Profile,
+  type ProfileLayerConfig,
   type ReportLevel,
   type SchemaLayerConfig,
 } from "./profile.js";

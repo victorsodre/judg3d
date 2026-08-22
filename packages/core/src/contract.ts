@@ -69,6 +69,15 @@ export type MeshMetrics = {
   dimensions?: { x: number; y: number; z: number };
   /** Estimativa de VRAM em bytes (geometria + texturas). Vem com L3. */
   vramEstimateBytes?: number;
+  /**
+   * Texturas do asset. Vem com L2, ausente sem ela.
+   *
+   * Existe porque `materials` conta materiais e nao diz nada sobre o conteudo
+   * deles: numa calibracao de 78 rodadas, a mudanca que mais alterou a imagem
+   * produziu duas linhas identicas na serie de metricas. Resolucao e o primeiro
+   * atributo de material que da para medir sem abrir o JSON do glTF.
+   */
+  textures?: { count: number; maxSize: number };
 };
 
 export type Verdict = {

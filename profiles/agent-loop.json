@@ -1,0 +1,31 @@
+{
+  "id": "agent-loop",
+  "version": "0.1.0",
+  "profileFormat": 1,
+  "extends": null,
+  "layers": {
+    "schema": {
+      "enabled": true,
+      "failOn": "error",
+      "report": "warn",
+      "ignoredIssues": [],
+      "severityOverrides": {},
+      "maxIssues": 0
+    },
+    "profile": {
+      "enabled": true,
+      "failOn": "error",
+      "budgets": {
+        "maxTriangles": 350000,
+        "maxVertices": null,
+        "maxMaterials": 20,
+        "maxDrawCalls": 60,
+        "maxTextureSize": 2048
+      },
+      "requireSelfContained": true
+    },
+    "geometry": { "enabled": false },
+    "visual": { "enabled": false },
+    "semantic": { "enabled": false }
+  }
+}
