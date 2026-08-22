@@ -76,6 +76,16 @@ que não pode existir.
 Ligar no profile uma camada ainda não implementada derruba o comando com
 exit 2, de propósito.
 
+## App local
+
+```bash
+pnpm app:dev
+# UI http://127.0.0.1:5173 · API http://127.0.0.1:8787
+```
+
+Interface no browser: solte um GLB, escolha o profile, veja o veredito.
+A API reutiliza `@judg3d/judge` — mesmo contrato do CLI.
+
 ## Pacotes
 
 | Pacote | O que é |
