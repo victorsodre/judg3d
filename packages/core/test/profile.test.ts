@@ -139,6 +139,7 @@ describe("serializeReport", () => {
       asset: { uri: "a.glb", sha256: "abc", bytes: 10 },
       profile: { id: "teste", version: "0.1.0", sha256: "def" },
       engine: { gltfValidator: "2.0.0", node: "v26.0.0", layers: ["SCHEMA"] },
+      coverage: { ran: ["SCHEMA"], skipped: ["PROFILE", "GEOMETRY", "VISUAL", "SEMANTIC"] },
       verdict: {
         pass: true,
         violations: [],

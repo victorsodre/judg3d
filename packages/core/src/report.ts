@@ -26,6 +26,21 @@ export type JudgeReport = {
     node: string;
     layers: LayerKind[];
   };
+  /**
+   * O que este veredicto cobre — e o que ele NAO cobre.
+   *
+   * Um `APROVADO` sem essa lista convida a leitura errada, e ela ja aconteceu:
+   * um modelo aprovado pelo judg3d foi reprovado por um critic humano na mesma
+   * hora, porque as camadas que julgam aparencia estavam desligadas. O
+   * relatorio dizia a verdade e mesmo assim enganava, por omissao.
+   *
+   * `skipped` sao as camadas que o profile nao ligou ou que esta versao nao
+   * implementa. Elas nao passaram: elas nao correram.
+   */
+  coverage: {
+    ran: LayerKind[];
+    skipped: LayerKind[];
+  };
   generatedAt?: string;
   verdict: Verdict;
 };

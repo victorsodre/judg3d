@@ -61,6 +61,16 @@ const budgetSchema = z.strictObject({
   maxDrawCalls: z.int().min(0).nullable().default(null),
   /** Maior lado, em pixels, de qualquer imagem do asset. */
   maxTextureSize: z.int().min(0).nullable().default(null),
+  /**
+   * Fracao do teto a partir da qual a metrica vira aviso. 0 desliga.
+   *
+   * `OK` e `OK a 89% do teto` levam a decisoes diferentes, e o relatorio so
+   * sabia dizer o primeiro. Um projeto real fechou uma fase com
+   * `triangulos 311 784 de 350 000` marcado apenas como OK — 89,1%, e a
+   * proxima peca nao cabia. Passar do teto e tarde; chegar perto e o momento
+   * em que ainda da para decidir.
+   */
+  nearLimit: z.number().min(0).max(1).default(0),
 });
 
 const NO_BUDGET = {
@@ -69,6 +79,7 @@ const NO_BUDGET = {
   maxMaterials: null,
   maxDrawCalls: null,
   maxTextureSize: null,
+  nearLimit: 0,
 } as const;
 
 /**

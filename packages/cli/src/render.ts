@@ -51,6 +51,16 @@ export function renderReport(report: JudgeReport, outPath: string): string {
   lines.push("");
   lines.push(dim(`métricas: ${renderMetrics(report)}`));
   lines.push(dim(`camadas: ${report.engine.layers.join(", ")}`));
+  const fora = report.coverage.skipped;
+  if (fora.length > 0) {
+    // Um APROVADO sem esta linha convida a leitura errada, e ela ja aconteceu:
+    // um modelo aprovado aqui foi reprovado por um critic humano na mesma hora,
+    // porque as camadas que julgam aparencia estavam desligadas. O relatorio
+    // dizia a verdade e enganava por omissao.
+    lines.push(
+      dim(`NAO coberto: ${fora.join(", ")} — este veredicto e sobre conformidade, nao aparencia`),
+    );
+  }
   lines.push(dim(`relatório: ${outPath}`));
 
   return lines.join("\n");

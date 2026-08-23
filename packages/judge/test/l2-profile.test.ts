@@ -118,7 +118,9 @@ describe("L2 PROFILE nos fixtures reais", () => {
       kind: "PROFILE",
       code: "TRIANGLES_OVER_BUDGET",
       severity: "error",
-      got: { metric: "triangles", value: 12 },
+      // `uso` entrou com o nearLimit: 12/4 = 3,0, ou seja 300% do teto.
+      // "value 12, max 4" e "300% do teto" nao custam o mesmo para quem le.
+      got: { metric: "triangles", value: 12, uso: 3 },
       want: { metric: "triangles", max: 4 },
     });
   });
@@ -133,7 +135,7 @@ describe("L2 PROFILE nos fixtures reais", () => {
     const violation = verdict.violations.find(
       (v) => v.code === "TEXTURE_OVER_BUDGET",
     );
-    expect(violation?.got).toEqual({ metric: "maxTextureSize", value: 256 });
+    expect(violation?.got).toEqual({ metric: "maxTextureSize", value: 256, uso: 2 });
   });
 });
 
@@ -148,6 +150,7 @@ describe("L2 PROFILE — orcamento", () => {
         maxMaterials: null,
         maxDrawCalls: null,
         maxTextureSize: null,
+        nearLimit: 0,
       },
       severityByCode: {},
       requireSelfContained: true,
@@ -165,6 +168,7 @@ describe("L2 PROFILE — orcamento", () => {
         maxMaterials: null,
         maxDrawCalls: null,
         maxTextureSize: null,
+        nearLimit: 0,
       },
       severityByCode: {},
       requireSelfContained: true,
@@ -185,6 +189,7 @@ describe("L2 PROFILE — orcamento", () => {
           maxMaterials: 20,
           maxDrawCalls: 60,
           maxTextureSize: null,
+          nearLimit: 0,
         },
         severityByCode: {},
         requireSelfContained: true,
@@ -192,7 +197,7 @@ describe("L2 PROFILE — orcamento", () => {
     );
     // Triangulos em 0,7% do teto e draw calls em 58%: so material estoura.
     expect(violations.map((v) => v.code)).toEqual(["MATERIALS_OVER_BUDGET"]);
-    expect(violations[0]?.got).toEqual({ metric: "materials", value: 35 });
+    expect(violations[0]?.got).toEqual({ metric: "materials", value: 35, uso: 1.75 });
   });
 });
 
@@ -214,6 +219,7 @@ describe("L2 PROFILE — autocontencao", () => {
         maxMaterials: null,
         maxDrawCalls: null,
         maxTextureSize: null,
+        nearLimit: 0,
       },
       severityByCode: {},
       requireSelfContained: true,
@@ -240,6 +246,7 @@ describe("L2 PROFILE — autocontencao", () => {
         maxMaterials: null,
         maxDrawCalls: null,
         maxTextureSize: null,
+        nearLimit: 0,
       },
       severityByCode: {},
       requireSelfContained: false,
@@ -259,6 +266,7 @@ describe("L2 PROFILE — o que nao pode acontecer", () => {
         maxMaterials: null,
         maxDrawCalls: null,
         maxTextureSize: null,
+        nearLimit: 0,
       },
       severityByCode: {},
       requireSelfContained: true,
@@ -286,6 +294,7 @@ describe("L2 PROFILE — severidade decidida pelo profile", () => {
       maxMaterials: null,
       maxDrawCalls: null,
       maxTextureSize: null,
+      nearLimit: 0,
     },
     severityByCode,
     requireSelfContained: true,
@@ -327,5 +336,87 @@ describe("L2 PROFILE — severidade decidida pelo profile", () => {
       config({ METRICS_UNAVAILABLE: "warn" }),
     );
     expect(violations[0]?.severity).toBe("error");
+  });
+});
+
+describe("nearLimit — o aviso antes da parede", () => {
+  /**
+   * Numeros reais do relatorio do round 200 do projeto tumbler-three, que e o
+   * que motivou este recurso: o laudo dizia apenas `OK` para
+   * `triangulos 311 784 de 350 000`. Sao 89,1%, e a proxima peca nao cabia.
+   *
+   * `OK` e `OK a 89% do teto` levam a decisoes diferentes.
+   */
+  const config = (nearLimit: number) => ({
+    enabled: true,
+    failOn: "error" as const,
+    budgets: {
+      maxTriangles: 350_000,
+      maxVertices: null,
+      maxMaterials: 20,
+      maxDrawCalls: 60,
+      maxTextureSize: 2048,
+      nearLimit,
+    },
+    severityByCode: {},
+    requireSelfContained: true,
+  });
+
+  const round200 = {
+    triangles: 311_784,
+    vertices: 317_399,
+    materials: 9,
+    drawCalls: 46,
+  };
+
+  it("com 0, nao avisa nada — o default nao muda comportamento", () => {
+    const { violations } = runProfileLayer(
+      info({ totalTriangleCount: round200.triangles }),
+      round200,
+      config(0),
+    );
+    expect(violations).toEqual([]);
+  });
+
+  it("avisa nos 89,1% de triangulos, e so neles", () => {
+    const { violations } = runProfileLayer(
+      info({ totalTriangleCount: round200.triangles }),
+      round200,
+      config(0.85),
+    );
+    // draw calls a 76,7% e materiais a 45% ficam abaixo do limiar: o aviso
+    // aponta a metrica que esta perto, nao todas.
+    expect(violations.map((v) => v.code)).toEqual(["TRIANGLES_NEAR_BUDGET"]);
+    expect(violations[0]?.severity).toBe("warn");
+    expect(violations[0]?.got).toEqual({
+      metric: "triangles",
+      value: 311_784,
+      uso: 0.891,
+    });
+  });
+
+  it("aviso de proximidade nao reprova o asset", () => {
+    const { violations } = runProfileLayer(
+      info({ totalTriangleCount: round200.triangles }),
+      round200,
+      config(0.85),
+    );
+    // Severidade warn com failOn error: o asset passa e o operador fica sabendo.
+    expect(violations.every((v) => v.severity === "warn")).toBe(true);
+  });
+
+  it("acima do teto vira OVER, nao NEAR — nao os dois", () => {
+    const estourado = { ...round200, triangles: 400_000 };
+    const { violations } = runProfileLayer(
+      info({ totalTriangleCount: 400_000 }),
+      estourado,
+      config(0.85),
+    );
+    expect(violations.map((v) => v.code)).toEqual(["TRIANGLES_OVER_BUDGET"]);
+    expect(violations[0]?.got).toEqual({
+      metric: "triangles",
+      value: 400_000,
+      uso: 1.143,
+    });
   });
 });

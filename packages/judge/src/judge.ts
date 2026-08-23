@@ -7,6 +7,7 @@ import {
 import {
   EMPTY_METRICS,
   InfraError,
+  LAYER_KINDS,
   assertLayersImplemented,
   enabledLayers,
   sha256Hex,
@@ -178,6 +179,13 @@ function buildReport(
       gltfValidator: gltfValidatorVersion(),
       node: process.version,
       layers,
+    },
+    coverage: {
+      ran: layers,
+      // Tudo que nao correu, seja por estar desligado no profile ou por nao
+      // existir nesta versao. A distincao nao importa para quem le o veredito:
+      // nos dois casos aquela dimensao nao foi julgada.
+      skipped: LAYER_KINDS.filter((kind) => !layers.includes(kind)),
     },
     ...(options.timestamp === true
       ? { generatedAt: new Date().toISOString() }

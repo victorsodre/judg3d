@@ -63,6 +63,14 @@ function severityOf(code: string, config: ProfileLayerConfig): Severity {
   return config.severityByCode[code] ?? "error";
 }
 
+/** Uso como fracao do teto, com duas casas — `0.891` em vez de `0.8908...`. */
+function fracao(rule: BudgetRule): number | undefined {
+  if (rule.max === null || rule.max === 0) {
+    return undefined;
+  }
+  return Math.round((rule.value / rule.max) * 1000) / 1000;
+}
+
 /** Um limite do profile e a metrica correspondente. */
 type BudgetRule = {
   code: string;
@@ -176,15 +184,39 @@ function checkBudgets(
     });
   }
 
-  return rules
-    .filter((rule) => rule.max !== null && rule.value > rule.max)
-    .map((rule) => ({
-      kind: "PROFILE" as const,
-      code: rule.code,
-      severity: severityOf(rule.code, config),
-      got: { metric: rule.metric, value: rule.value },
-      want: { metric: rule.metric, max: rule.max },
-    }));
+  const violations: Violation[] = [];
+
+  for (const rule of rules) {
+    if (rule.max === null) {
+      continue;
+    }
+    if (rule.value > rule.max) {
+      violations.push({
+        kind: "PROFILE",
+        code: rule.code,
+        severity: severityOf(rule.code, config),
+        got: { metric: rule.metric, value: rule.value, uso: fracao(rule) },
+        want: { metric: rule.metric, max: rule.max },
+      });
+      continue;
+    }
+    // Dentro do teto, mas perto dele. Nao e defeito do asset — e a informacao
+    // que separa "cabe" de "cabe, e a proxima peca nao cabe".
+    if (budgets.nearLimit > 0 && rule.max > 0) {
+      const uso = rule.value / rule.max;
+      if (uso >= budgets.nearLimit) {
+        violations.push({
+          kind: "PROFILE",
+          code: `${rule.code.replace("_OVER_BUDGET", "")}_NEAR_BUDGET`,
+          severity: "warn",
+          got: { metric: rule.metric, value: rule.value, uso: fracao(rule) },
+          want: { metric: rule.metric, max: rule.max, nearLimit: budgets.nearLimit },
+        });
+      }
+    }
+  }
+
+  return violations;
 }
 
 /**

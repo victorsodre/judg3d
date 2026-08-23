@@ -21,7 +21,8 @@
         "maxVertices": null,
         "maxMaterials": 20,
         "maxDrawCalls": 60,
-        "maxTextureSize": 2048
+        "maxTextureSize": 2048,
+        "nearLimit": 0.85
       },
       "requireSelfContained": true
     },

@@ -190,6 +190,65 @@ cinco códigos distintos, em vez de um arquivo de centenas de megabytes.
 
 Default `0` (ilimitado): o comportamento anterior não muda para quem não pediu.
 
+## O relatório do round 200 — o que o consumidor teve que construir sozinho
+
+Em 23/08/2026 o projeto gerou um relatório completo do modelo terminado
+(311 784 triângulos, 46 malhas, 9 materiais). Ele é, lido de outro jeito, uma
+**lista de features com protótipo funcionando**: tudo que há de valioso nele e
+que o `judg3d` não produz é um pedido com evidência anexa.
+
+### Entrou nesta sessão
+
+**`nearLimit`.** O laudo dizia apenas `OK` para `triângulos 311 784 de
+350 000`. São **89,1%**, e a próxima peça não cabia.
+
+> `OK` e `OK a 89% do teto` levam a decisões diferentes, e o relatório só sabia
+> dizer o primeiro. Passar do teto é tarde; chegar perto é o momento em que
+> ainda dá para decidir.
+
+Uma fração do teto no profile (0 desliga) faz a métrica virar
+`<METRICA>_NEAR_BUDGET`, severidade `warn`. E toda violação de orçamento passou
+a carregar `uso`: `35 materiais` vira `35 materiais, 175% do teto`.
+
+**`coverage` no envelope.** O relatório declarava, por conta própria:
+
+> *"o judg3d aprova **conformidade**, não aparência. Um modelo pode estar
+> APROVADO e ainda assim ser reprovado pelo critic — é exatamente o estado
+> atual."*
+
+Isso aconteceu de verdade: `APROVADO — 0 erros, 0 avisos` no mesmo modelo que
+um critic cego reprovou com 4 · 3 · 5 · 3. **O relatório dizia a verdade e
+enganava por omissão.**
+
+O envelope passou a carregar `ran` e `skipped`, e o CLI imprime a linha:
+
+```
+NAO coberto: GEOMETRY, VISUAL, SEMANTIC — este veredicto e sobre
+             conformidade, nao aparencia
+```
+
+Camada desligada **não passou**: ela não correu. A diferença tem que estar na
+saída, não na cabeça de quem lê.
+
+### Não entrou, e é a mesma decisão de sempre
+
+A parte mais rica do relatório é a **distribuição de triângulos por peça e por
+material** — `roda_traseira_esquerda 49 580 (15,9%)`, `pneu 99 160 em 2 peças`.
+Ela converte um total em decisão: *"54% do orçamento está em pneu, e isso é
+deliberado"*.
+
+O `judg3d` não consegue produzi-la. O `info` do validator dá só totais, e o
+projeto obteve a distribuição **do Blender**, não do GLB — um script Python no
+DCC, fora do juiz.
+
+Para o juiz fazer isso é preciso ler o array `meshes` do glTF, que é a
+dependência já discutida em *"O que ficou de fora"*. Este relatório é o
+argumento mais forte a favor dela até agora: **não é uma métrica que seria
+bom ter — é uma que o usuário já implementou por fora porque precisava.**
+
+Junto com ela viriam materiais duplicados (H3) e nó órfão (H4), as duas
+hipóteses que seguem sem teste.
+
 ## O achado estrutural — e ele não é sobre 3D
 
 Das 35 hipóteses, a maioria **não** pede um juiz mais inteligente:
