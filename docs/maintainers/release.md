@@ -56,6 +56,11 @@ from source-install instructions to a verified registry quickstart. Create the
 release notes and tag against the tested source revision. Do not publish from
 `tools/npm-placeholder/`.
 
+Run `node tools/check-release.mjs --registry` against the reviewed package
+manifest. It installs the exact versions from npm and compares the registry's
+integrity values with the local tarballs before exercising CLI, MCP and HTTP.
+The result is written separately to `artifacts/release/registry-verification.json`.
+
 ## Rollback
 
 Before publication, remove only generated artifacts or restore reviewed files

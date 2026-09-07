@@ -8,7 +8,7 @@ type MetricsBarProps = {
 export function MetricsBar({ metrics }: MetricsBarProps) {
   const { locale, t } = useLocale();
   const number = new Intl.NumberFormat(locale);
-  const cells = [
+  const cells: { label: string; value: string }[] = [
     { label: t.triangles, value: number.format(metrics.triangles) },
     { label: t.vertices, value: number.format(metrics.vertices) },
     { label: t.materials, value: number.format(metrics.materials) },

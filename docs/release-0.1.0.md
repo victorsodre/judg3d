@@ -20,8 +20,8 @@ separate owner approval step. The old `judg3d@0.0.1` package only reserves the n
 - HTTP validates local origins/hostnames and restricts static files. The app
   supports reconnect/cancel, resets results when inputs change, shows coverage
   and filters/paginates violations.
-- English is the default. pt-BR is a persistent UI option; report JSON and
-  technical diagnostics stay English. Language changes do not rerun analysis.
+- The interface, report JSON and technical diagnostics use English.
+  The UI has no language selector or stored language preference.
 - Received reports reject inconsistent coverage and contradictory verdicts.
   Nested detail formatting is bounded without changing raw report data.
 - MIT licensing, contribution/security/governance documents, issue/PR templates,

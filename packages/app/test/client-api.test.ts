@@ -4,7 +4,7 @@ import { loadProfile, serializeReport } from "@judg3d/core";
 import { judge, readAsset } from "@judg3d/judge";
 import { fetchProfiles, judgeAsset } from "../ui/src/api.js";
 import { apiError } from "../src/api-errors.js";
-import { errorKey, translate } from "../ui/src/messages.js";
+import { errorKey, messages } from "../ui/src/messages.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 afterEach(() => {
@@ -52,7 +52,7 @@ it("não apresenta um PASS malformado, contraditório ou diferente do download",
   );
 });
 
-it("localizes stable API error codes without translating the wire response", async () => {
+it("presents stable API error codes without changing the wire response", async () => {
   const body = apiError("PROFILE_NOT_FOUND");
   const fetch = vi.fn().mockResolvedValue(Response.json(body, { status: 400 }));
   vi.stubGlobal("fetch", fetch);
@@ -60,11 +60,8 @@ it("localizes stable API error codes without translating the wire response", asy
   expect(result).toEqual(body);
   if (result.ok) throw new Error("Expected an API failure.");
   expect(result.message).toBe("Profile not found or invalid.");
-  expect(translate("en")[result.code]).toBe(
+  expect(messages.en[result.code]).toBe(
     "The profile was not found or is invalid.",
-  );
-  expect(translate("pt-BR")[result.code]).toBe(
-    "O perfil não foi encontrado ou é inválido.",
   );
   expect(fetch).toHaveBeenCalledTimes(1);
 

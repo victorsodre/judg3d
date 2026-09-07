@@ -1,4 +1,3 @@
-import { LocaleProvider } from "./locale.js";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -12,8 +11,6 @@ if (root === null) {
 
 createRoot(root).render(
   <StrictMode>
-    <LocaleProvider>
-      <App />
-    </LocaleProvider>
+    <App />
   </StrictMode>,
 );

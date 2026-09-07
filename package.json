@@ -20,6 +20,7 @@
     "release:pack": "pnpm build && node tools/pack-release.mjs",
     "release:check": "node tools/check-release.mjs",
     "demo": "pnpm build && node examples/acceptance-gate/run.mjs",
+    "demo:repair": "pnpm build && node examples/repair-loop/run.mjs",
     "docs:check": "node tools/check-project.mjs"
   },
   "devDependencies": {

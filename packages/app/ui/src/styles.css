@@ -111,17 +111,11 @@ pre {
 .brand__identity {
   min-width: 0;
 }
-.language-picker {
-  flex: 0 0 12rem;
-}
+
 @media (max-width: 600px) {
   .brand {
     flex-direction: column;
     gap: 1rem;
-  }
-  .language-picker {
-    flex: initial;
-    width: min(100%, 16rem);
   }
 }
 
