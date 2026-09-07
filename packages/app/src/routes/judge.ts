@@ -1,15 +1,13 @@
 import { join } from "node:path";
 
 import {
-  isInfraError,
-  loadProfile,
   serializeReport,
   type JudgeReport,
 } from "@judg3d/core";
-import { judge } from "@judg3d/judge";
 import type { Context } from "hono";
 
 import { APP_VERSION } from "../version.js";
+import { JudgeJobError, runJudgeJob } from "../judge-job.js";
 
 export type JudgeSuccessBody = {
   ok: true;
@@ -33,7 +31,7 @@ function asFile(value: unknown): File | undefined {
   return undefined;
 }
 
-export function createJudgeHandler(profilesDir: string) {
+export function createJudgeHandler(profilesDir: string, timeoutMs = 30_000) {
   return async function judgeHandler(c: Context): Promise<Response> {
     try {
       const body = await c.req.parseBody({ all: true });
@@ -69,15 +67,10 @@ export function createJudgeHandler(profilesDir: string) {
       }
 
       const profilePath = join(profilesDir, profileName);
-      const loaded = await loadProfile(profilePath);
       const bytes = new Uint8Array(await asset.arrayBuffer());
       const uri = asset.name.trim() !== "" ? asset.name : "upload.glb";
 
-      const { report } = await judge(
-        { bytes, uri },
-        loaded,
-        { judg3dVersion: APP_VERSION },
-      );
+      const report = await runJudgeJob({ bytes, uri, profilePath, version: APP_VERSION }, timeoutMs);
 
       const payload: JudgeSuccessBody = {
         ok: true,
@@ -87,14 +80,13 @@ export function createJudgeHandler(profilesDir: string) {
       };
       return c.json(payload);
     } catch (error) {
-      if (isInfraError(error)) {
+      if (error instanceof JudgeJobError) {
         return c.json(
           {
             ok: false,
             exitHint: 2,
             error: "infra",
             message: error.message,
-            ...(error.detail !== undefined ? { detail: error.detail } : {}),
           } satisfies JudgeErrorBody,
           500,
         );
@@ -105,7 +97,6 @@ export function createJudgeHandler(profilesDir: string) {
           exitHint: 2,
           error: "infra",
           message: "Falha inesperada ao julgar o asset.",
-          detail: error instanceof Error ? error.message : String(error),
         } satisfies JudgeErrorBody,
         500,
       );

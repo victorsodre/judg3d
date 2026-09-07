@@ -86,6 +86,8 @@ pnpm app:dev
 Interface no browser: solte um GLB, escolha o profile, veja o veredito.
 A API reutiliza `@judg3d/judge` — mesmo contrato do CLI.
 
+A API aceita apenas acesso local e as origens da UI local. O upload completo tem limite de 64 MiB, com até dois pedidos em andamento. Cada análise roda em um worker separado, encerrado após 30 segundos; atingir o limite retorna erro de infraestrutura, nunca um resultado PASS. O servidor limita o recebimento da requisição a 30 segundos e dos headers a 10 segundos. A listagem de profiles informa apenas o nome do arquivo.
+
 ## Pacotes
 
 | Pacote | O que é |

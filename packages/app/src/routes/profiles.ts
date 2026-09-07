@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-import { InfraError, parseProfile } from "@judg3d/core";
+import { parseProfile } from "@judg3d/core";
 import type { Context } from "hono";
 
 export type ProfileSummary = {
@@ -31,24 +31,17 @@ export function createProfilesHandlers(profilesDir: string): {
             id: profile.id,
             version: profile.version,
             filename: basename(path),
-            path,
+            path: basename(path),
           });
         }
 
         summaries.sort((a, b) => a.id.localeCompare(b.id));
         return c.json({ profiles: summaries });
-      } catch (error) {
-        if (error instanceof InfraError) {
-          return c.json(
-            { error: "infra", message: error.message, detail: error.detail },
-            500,
-          );
-        }
+      } catch {
         return c.json(
           {
             error: "infra",
             message: "Nao consegui listar os profiles.",
-            detail: error instanceof Error ? error.message : String(error),
           },
           500,
         );

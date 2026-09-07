@@ -20,7 +20,16 @@ const app = createApp({
   clientDist,
 });
 
-serve({ fetch: app.fetch, port, hostname: "127.0.0.1" }, (info) => {
+serve({
+  fetch: app.fetch,
+  port,
+  hostname: "127.0.0.1",
+  serverOptions: {
+    requestTimeout: 30_000,
+    headersTimeout: 10_000,
+    connectionsCheckingInterval: 1_000,
+  },
+}, (info) => {
   process.stdout.write(
     `judg3d app ${APP_VERSION} · http://127.0.0.1:${String(info.port)}\n`,
   );

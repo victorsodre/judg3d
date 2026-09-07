@@ -4,6 +4,7 @@ import { extname, join, normalize, relative, resolve } from "node:path";
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { bodyLimit } from "hono/body-limit";
 
 import { resolveClientDist } from "./paths.js";
 import { healthHandler } from "./routes/health.js";
@@ -15,6 +16,9 @@ export type CreateAppOptions = {
   /** Quando true, serve a UI buildada de client-dist/. */
   serveClient?: boolean;
   clientDist?: string;
+  maxUploadBytes?: number;
+  maxConcurrentJobs?: number;
+  jobTimeoutMs?: number;
 };
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
@@ -31,18 +35,45 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 export function createApp(options: CreateAppOptions): Hono {
   const app = new Hono();
   const profiles = createProfilesHandlers(options.profilesDir);
+  const maxUploadBytes = options.maxUploadBytes ?? 64 * 1024 * 1024;
+  const maxConcurrentJobs = options.maxConcurrentJobs ?? 2;
+  let activeJobs = 0;
+  const developmentOrigins = ["http://127.0.0.1:5173", "http://localhost:5173"];
+
+  app.use("*", async (c, next) => {
+    const requestUrl = new URL(c.req.url);
+    const origin = c.req.header("Origin");
+    if (!["localhost", "127.0.0.1", "[::1]"].includes(requestUrl.hostname) ||
+      (origin !== undefined && origin !== requestUrl.origin && !developmentOrigins.includes(origin))) {
+      return c.json({ ok: false, exitHint: 2, error: "bad_request", message: "Origem não permitida." }, 403);
+    }
+    await next();
+  });
 
   app.use(
     "/api/*",
     cors({
-      origin: ["http://127.0.0.1:5173", "http://localhost:5173"],
+      origin: developmentOrigins,
       allowMethods: ["GET", "POST", "OPTIONS"],
+      allowHeaders: ["Content-Type"],
     }),
   );
 
   app.get("/api/health", healthHandler);
   app.get("/api/profiles", (c) => profiles.list(c));
-  app.post("/api/judge", createJudgeHandler(options.profilesDir));
+  app.use("/api/judge", async (c, next) => {
+    if (c.req.method !== "POST") { await next(); return; }
+    if (activeJobs >= maxConcurrentJobs) {
+      return c.json({ ok: false, exitHint: 2, error: "bad_request", message: "Já há arquivos em processamento. Tente novamente em instantes." }, 429);
+    }
+    activeJobs += 1;
+    try { await next(); } finally { activeJobs -= 1; }
+  });
+  app.use("/api/judge", bodyLimit({
+    maxSize: maxUploadBytes,
+    onError: (c) => c.json({ ok: false, exitHint: 2, error: "bad_request", message: "O upload excede o limite permitido." }, 413),
+  }));
+  app.post("/api/judge", createJudgeHandler(options.profilesDir, options.jobTimeoutMs ?? 30_000));
 
   if (options.serveClient === true) {
     const clientRoot = resolve(options.clientDist ?? resolveClientDist());
