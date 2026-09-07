@@ -7,71 +7,40 @@ import type {
   Violation,
 } from "@judg3d/core";
 
-/**
- * L2 PROFILE — o asset cabe no orcamento e e autocontido?
- *
- * Como a L1, esta camada nao reimplementa nada: le o `info` que o validator da
- * Khronos ja produziu e aplica os limites que vieram do profile. A diferenca
- * e o que ela julga — a L1 pergunta se o arquivo e valido, a L2 pergunta se ele
- * e utilizavel.
- *
- * A distincao nao e teorica. Numa calibracao de 78 rodadas contra um pipeline
- * de autoria por agente, a L1 devolveu `exit 0` em todas as execucoes e o unico
- * defeito que um portao automatico pegou foi orcamento estourado — 35 materiais
- * contra teto de 20, enquanto os triangulos estavam em 0,7% do limite. Aquele
- * portao vivia fora do judg3d. Esta camada o traz para dentro.
- */
+/** PROFILE applies configured budgets and self-containment rules to Khronos info without reimplementing a glTF parser. */
 
-/**
- * `storage` que mantem o recurso dentro do arquivo. Valores confirmados
- * empiricamente contra o validator 2.0.0-dev.3.10, nao lidos da documentacao:
- * `glb` (chunk binario), `buffer-view` (imagem embutida) e `data-uri` (base64).
- * Qualquer outro — `external` — aponta para fora.
- */
+/** Embedded storage values verified against validator 2.0.0-dev.3.10: glb, buffer-view and data-uri. Other values identify external resources. */
 const SELF_CONTAINED_STORAGE: ReadonlySet<string> = new Set([
   "glb",
   "buffer-view",
   "data-uri",
 ]);
 
-/**
- * O asset nao pode ser medido, e a camada foi pedida. Nunca e silencio: um
- * PASS que significa "essa checagem nem rodou" e o unico resultado que a spec
- * proibe. Na pratica a L1 ja terra reprovado — `info` some quando
- * `asset.version` e invalido — mas depender disso seria depender de outra
- * camada estar ligada.
- */
+/** An enabled check with unavailable measurements must not silently pass. */
 export const METRICS_UNAVAILABLE_CODE = "METRICS_UNAVAILABLE";
 
 export const EXTERNAL_RESOURCE_CODE = "EXTERNAL_RESOURCE";
 
 export type ProfileLayerResult = {
   violations: Violation[];
-  /** Metricas da L1 acrescidas do que a L2 consegue medir. */
+  /** SCHEMA metrics enriched with measurements available to PROFILE. */
   metrics: MeshMetrics;
 };
 
-/**
- * Severidade de uma violacao desta camada. `error` por padrao: o silencio tem
- * que ser pedido, nunca herdado.
- *
- * `METRICS_UNAVAILABLE` nao passa por aqui de proposito — ele nao e um juizo
- * sobre o asset, e sim o aviso de que nenhum juizo foi feito, e rebaixa-lo a
- * aviso reconstruiria o falso PASS que a spec proibe.
- */
+/** Budget diagnostics default to error. Missing measurements cannot be downgraded because that would allow an unperformed check to pass. */
 function severityOf(code: string, config: ProfileLayerConfig): Severity {
   return config.severityByCode[code] ?? "error";
 }
 
-/** Uso como fracao do teto, com duas casas — `0.891` em vez de `0.8908...`. */
-function fracao(rule: BudgetRule): number | undefined {
+/** Budget usage fraction rounded to three decimal places. */
+function usageRatio(rule: BudgetRule): number | undefined {
   if (rule.max === null || rule.max === 0) {
     return undefined;
   }
   return Math.round((rule.value / rule.max) * 1000) / 1000;
 }
 
-/** Um limite do profile e a metrica correspondente. */
+/** Profile budget and its corresponding measured value. */
 type BudgetRule = {
   code: string;
   metric: string;
@@ -89,11 +58,12 @@ export function runProfileLayer(
       violations: [
         {
           kind: "PROFILE",
+          nodePath: "",
           code: METRICS_UNAVAILABLE_CODE,
           severity: "error",
           got: {
             message:
-              "O validator nao produziu metricas para este asset, entao o orcamento nao pode ser conferido.",
+              "The validator did not produce metrics for this asset, so its budgets cannot be checked.",
           },
           want: { measurable: true },
         },
@@ -107,6 +77,7 @@ export function runProfileLayer(
     textures === undefined ? metrics : { ...metrics, textures };
 
   const violations: Violation[] = [
+    ...checkTextureMeasurements(info.resources, config),
     ...checkBudgets(enriched, textures, config),
     ...checkSelfContained(info.resources, config),
   ];
@@ -114,13 +85,7 @@ export function runProfileLayer(
   return { violations, metrics: enriched };
 }
 
-/**
- * Resolucao de textura e o primeiro atributo de *conteudo* de material que da
- * para medir sem abrir o JSON do glTF. A calibracao registrou que contar
- * materiais nao diz nada sobre o que ha dentro deles.
- *
- * Ausente — e nao zero — quando o asset nao tem imagem: zero seria mentira.
- */
+/** Texture metrics remain absent when there are no images or measurements are unavailable. */
 function summarizeTextures(
   resources: readonly GltfResource[] | undefined,
 ): MeshMetrics["textures"] {
@@ -132,14 +97,47 @@ function summarizeTextures(
   let maxSize = 0;
   for (const resource of resources) {
     const image = resource.image;
+    if (
+      resource.pointer.startsWith("/images/") &&
+      (image?.width === undefined || image.height === undefined)
+    ) {
+      return undefined;
+    }
     if (image === undefined) {
       continue;
     }
     count += 1;
-    maxSize = Math.max(maxSize, image.width ?? 0, image.height ?? 0);
+    if (image.width === undefined || image.height === undefined)
+      return undefined;
+    maxSize = Math.max(maxSize, image.width, image.height);
   }
 
   return count === 0 ? undefined : { count, maxSize };
+}
+
+function checkTextureMeasurements(
+  resources: readonly GltfResource[] | undefined,
+  config: ProfileLayerConfig,
+): Violation[] {
+  if (config.budgets.maxTextureSize === null) return [];
+  return (resources ?? [])
+    .filter(
+      (resource) =>
+        resource.pointer.startsWith("/images/") &&
+        (resource.image?.width === undefined ||
+          resource.image.height === undefined),
+    )
+    .map((resource) => ({
+      kind: "PROFILE" as const,
+      code: "TEXTURE_METRICS_UNAVAILABLE",
+      severity: "error" as const,
+      nodePath: resource.pointer,
+      got: {
+        message:
+          "This image could not be measured to check its resolution limit.",
+      },
+      want: { measurable: true, maxTextureSize: config.budgets.maxTextureSize },
+    }));
 }
 
 function checkBudgets(
@@ -193,24 +191,38 @@ function checkBudgets(
     if (rule.value > rule.max) {
       violations.push({
         kind: "PROFILE",
+        nodePath: "",
         code: rule.code,
         severity: severityOf(rule.code, config),
-        got: { metric: rule.metric, value: rule.value, uso: fracao(rule) },
+        got: {
+          metric: rule.metric,
+          value: rule.value,
+          usage: usageRatio(rule),
+        },
         want: { metric: rule.metric, max: rule.max },
       });
       continue;
     }
-    // Dentro do teto, mas perto dele. Nao e defeito do asset — e a informacao
-    // que separa "cabe" de "cabe, e a proxima peca nao cabe".
+    // Early warning threshold is controlled by the profile.
+
     if (budgets.nearLimit > 0 && rule.max > 0) {
-      const uso = rule.value / rule.max;
-      if (uso >= budgets.nearLimit) {
+      const usage = rule.value / rule.max;
+      if (usage >= budgets.nearLimit) {
         violations.push({
           kind: "PROFILE",
+          nodePath: "",
           code: `${rule.code.replace("_OVER_BUDGET", "")}_NEAR_BUDGET`,
           severity: "warn",
-          got: { metric: rule.metric, value: rule.value, uso: fracao(rule) },
-          want: { metric: rule.metric, max: rule.max, nearLimit: budgets.nearLimit },
+          got: {
+            metric: rule.metric,
+            value: rule.value,
+            usage: usageRatio(rule),
+          },
+          want: {
+            metric: rule.metric,
+            max: rule.max,
+            nearLimit: budgets.nearLimit,
+          },
         });
       }
     }
@@ -219,13 +231,7 @@ function checkBudgets(
   return violations;
 }
 
-/**
- * Recurso que mora fora do container. O validator nao reporta isso como
- * problema — e nao e, pelo padrao — mas um asset assim funciona na maquina de
- * quem exportou e quebra em qualquer outra. E a classe de defeito silencioso
- * que um juiz de aceitacao existe para pegar, e a informacao ja esta no
- * relatorio: custa uma comparacao de string.
- */
+/** External resources are valid glTF, but may fail a profile that requires a portable, self-contained asset. */
 function checkSelfContained(
   resources: readonly GltfResource[] | undefined,
   config: ProfileLayerConfig,

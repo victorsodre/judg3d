@@ -135,7 +135,9 @@ describe("L1 SCHEMA no fixture quebrado", () => {
       derived({ ignoredIssues: ["TYPE_MISMATCH"] }),
       OPTIONS,
     );
-    expect(verdict.violations.map((v) => v.code)).not.toContain("TYPE_MISMATCH");
+    expect(verdict.violations.map((v) => v.code)).not.toContain(
+      "TYPE_MISMATCH",
+    );
     expect(verdict.violations).toHaveLength(2);
     expect(verdict.pass).toBe(false);
   });
@@ -143,9 +145,10 @@ describe("L1 SCHEMA no fixture quebrado", () => {
 
 describe("tolerancia mora no profile", () => {
   it("failOn error deixa aviso passar; failOn warn reprova", async () => {
-    // O UNUSED_OBJECT do quebrado vira aviso quando o profile pede report info.
+    // O profile promove Information a Warning explicitamente.
     const asset = await readAsset(fixture("quebrado.glb"));
     const soAvisos = derived({
+      severityOverrides: { UNUSED_OBJECT: 1 },
       report: "info",
       ignoredIssues: [
         "UNRESOLVED_REFERENCE",
@@ -163,6 +166,7 @@ describe("tolerancia mora no profile", () => {
       derived({
         report: "info",
         failOn: "warn",
+        severityOverrides: { UNUSED_OBJECT: 1 },
         ignoredIssues: [
           "UNRESOLVED_REFERENCE",
           "UNDEFINED_PROPERTY",
@@ -230,7 +234,9 @@ describe("relatorio", () => {
     const primeiro = await judge(asset, profile, OPTIONS);
     const segundo = await judge(asset, profile, OPTIONS);
 
-    expect(JSON.stringify(primeiro.report)).toBe(JSON.stringify(segundo.report));
+    expect(JSON.stringify(primeiro.report)).toBe(
+      JSON.stringify(segundo.report),
+    );
     expect(primeiro.report.generatedAt).toBeUndefined();
 
     const bytes = await readFile(fixture("quebrado.glb"));

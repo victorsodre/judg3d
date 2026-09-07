@@ -1,0 +1,10 @@
+name: Usage question
+description: Ask about setup, profiles or interpreting a verdict.
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question and context
+      description: Include your versions, goal, command and relevant diagnostics. Keep private data out.
+    validations:
+      required: true

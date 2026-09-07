@@ -5,5 +5,18 @@
     "outDir": "./dist"
   },
   "include": ["src/**/*.ts"],
-  "references": [{ "path": "../core" }, { "path": "../judge" }]
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../judge"
+    },
+    {
+      "path": "../app"
+    },
+    {
+      "path": "../mcp"
+    }
+  ]
 }

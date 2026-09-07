@@ -1,3 +1,4 @@
+import { useLocale } from "../locale.js";
 import type { ProfileSummary } from "../types";
 
 type ProfilePickerProps = {
@@ -13,9 +14,10 @@ export function ProfilePicker({
   disabled,
   onChange,
 }: ProfilePickerProps) {
+  const { t } = useLocale();
   return (
     <label className="field">
-      <span className="field__label">profile</span>
+      <span className="field__label">{t.profile}</span>
       <select
         className="field__control"
         value={value}
@@ -25,7 +27,7 @@ export function ProfilePicker({
         }}
       >
         {profiles.length === 0 ? (
-          <option value="">Nenhum profile encontrado</option>
+          <option value="">{t.noProfiles}</option>
         ) : (
           profiles.map((profile) => (
             <option key={profile.filename} value={profile.filename}>

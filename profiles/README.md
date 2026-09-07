@@ -1,83 +1,66 @@
-# Perfis
+# Profiles
 
-Um perfil e o contrato de qualidade do dono do pipeline, versionado no repo
-dele. O "certo" de e-commerce nao e o de filme — por isso a tolerancia mora
-aqui, nunca no codigo do juiz.
+A profile is the pipeline owner's versioned acceptance contract. Different
+projects need different budgets, so acceptance thresholds belong here rather
+than in judge code.
 
 ## web-commerce v0.1.0
 
-So a camada L1 (SCHEMA) vem ligada aqui. A L2 existe desde 22/08/2026 mas fica
-**desligada neste perfil de proposito**: orcamento e decisao de quem e dono do
-pipeline, e inventar um teto de triangulos para "e-commerce em geral" seria
-exatamente o numero hardcoded que o invariante 2 proibe. Ligue a L2 e escolha
-os seus.
+This profile enables SCHEMA only. PROFILE is implemented but intentionally
+disabled here: there is no universal triangle budget for commerce assets.
+Enable PROFILE and select limits appropriate for your pipeline.
 
-As chaves de L3-L5 ja existem no formato para que ligar uma delas no futuro nao
-mude o schema do arquivo.
+| Key                               | Effect                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `layers.schema.failOn`            | `error` fails on validator errors; `warn` also fails on warnings                                              |
+| `layers.schema.report`            | Report verbosity; does not hide a failing severity or change the verdict                                      |
+| `layers.schema.ignoredIssues`     | Validator codes to ignore, such as `["UNUSED_OBJECT"]`                                                        |
+| `layers.schema.severityOverrides` | Code → Khronos severity: `0` Error, `1` Warning, `2` Information, `3` Hint                                    |
+| `layers.schema.maxIssues`         | Khronos global issue limit; truncated validation returns infrastructure failure. `0` is unlimited             |
+| `layers.schema.maxPerCode`        | Post-validation occurrence cap; `ISSUES_TRUNCATED` declares omissions without independently failing the asset |
 
-| Chave | Efeito |
-|-------|--------|
-| `layers.schema.failOn` | `error` reprova so nos erros do validator; `warn` reprova tambem nos avisos |
-| `layers.schema.report` | Severidade minima que vira `Violation` no relatorio. `warn` mantem infos e hints fora |
-| `layers.schema.ignoredIssues` | Codigos do glTF Validator a ignorar, ex.: `["UNUSED_OBJECT"]` |
-| `layers.schema.severityOverrides` | Codigo -> severidade Khronos (`0` Error, `1` Warning, `2` Info, `3` Hint) |
-| `layers.schema.maxIssues` | Teto de issues reportadas. `0` e ilimitado |
-
-O schema e estrito: chave desconhecida derruba o comando com exit 2. Um typo
-em `ignoredIssues` seria um asset ruim aprovado sem ninguem perceber.
-
-Ligar uma camada ainda nao implementada (`geometry`, `visual`, `semantic`)
-tambem da exit 2, pelo mesmo motivo.
+The schema is strict: unknown keys return exit 2. Enabling an unimplemented
+layer (`geometry`, `visual`, `semantic`) also returns exit 2. Their configuration
+keys are reserved for future implementation.
 
 ## agent-loop v0.1.0
 
-Perfil para **pipeline de autoria conduzido por agente**, onde o asset e criado
-em rodadas sucessivas e o juiz e o portao de cada uma. L1 e L2 ligadas.
+An example profile for iterative asset authoring with an agent. Enables SCHEMA
+and PROFILE. Limits came from a specific project (`tumbler-three`): 350,000
+triangles, 60 draw calls, 20 materials and image dimensions up to 2048 px.
+Copy and adapt them; they are not universal judg3d defaults.
 
-Os tetos vieram de um projeto real (`tumbler-three`) e sao dele, nao do judg3d:
-350 000 triangulos, 60 draw calls, 20 materiais, textura ate 2048 px. Copie e
-troque pelos seus — o valor do arquivo e ser versionado com diff e review, nao
-ser universal.
+| Key                                     | Effect                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------ |
+| `layers.profile.failOn`                 | Rejection threshold independent of SCHEMA failOn                         |
+| `layers.profile.budgets.maxTriangles`   | Triangle limit; `null` disables                                          |
+| `layers.profile.budgets.maxVertices`    | Vertex limit; `null` disables                                            |
+| `layers.profile.budgets.maxMaterials`   | Material limit; `null` disables                                          |
+| `layers.profile.budgets.maxDrawCalls`   | Draw-call limit; `null` disables                                         |
+| `layers.profile.budgets.maxTextureSize` | Largest image dimension in pixels; `null` disables                       |
+| `layers.profile.budgets.nearLimit`      | Budget usage fraction that triggers an early warning; `0` disables       |
+| `layers.profile.requireSelfContained`   | Reject resources whose storage is not `glb`, `buffer-view` or `data-uri` |
+| `layers.profile.severityByCode`         | Diagnostic code → `error` or `warn`; defaults to `error`                 |
 
-| Chave | Efeito |
-|-------|--------|
-| `layers.profile.failOn` | Independente do `failOn` do schema. Tolerar aviso do validator num asset de terceiro nao deveria implicar tolerar estouro de orcamento |
-| `layers.profile.budgets.maxTriangles` | Teto de triangulos. `null` desliga |
-| `layers.profile.budgets.maxVertices` | Teto de vertices. `null` desliga |
-| `layers.profile.budgets.maxMaterials` | Teto de materiais. `null` desliga |
-| `layers.profile.budgets.maxDrawCalls` | Teto de draw calls. `null` desliga |
-| `layers.profile.budgets.maxTextureSize` | Maior lado de qualquer imagem, em pixels. `null` desliga |
-| `layers.profile.requireSelfContained` | Reprova recurso fora do container (`storage` diferente de `glb`, `buffer-view` ou `data-uri`) |
-| `layers.profile.severityByCode` | Codigo de violacao -> `error` ou `warn`. Sem entrada, a L2 emite `error` |
-
-### `severityByCode` — orcamento como gap, nao como reprovacao
-
-Nem todo dono de pipeline trata orcamento igual. Num catalogo de e-commerce,
-estourar poligono e reprovacao. Num loop de autoria, e um gap que se fecha
-antes de entregar — e reprovar a cada rodada intermediaria pararia o trabalho
-sem informar nada de novo.
-
-As duas leituras estao certas, e por isso a escolha e do profile:
+A pipeline can treat an exceeded budget as feedback during authoring:
 
 ```json
 "severityByCode": { "MATERIALS_OVER_BUDGET": "warn" }
 ```
 
-O default e `error`: **o silencio tem que ser pedido, nunca herdado.**
+Whether that warning rejects the asset depends on the layer's `failOn`.
+`METRICS_UNAVAILABLE` and `TEXTURE_METRICS_UNAVAILABLE` cannot be downgraded;
+a requested check without measurements must never silently pass.
 
-`METRICS_UNAVAILABLE` e a unica excecao e nao pode ser rebaixado. Ele nao e um
-juizo sobre o asset — e o aviso de que nenhum juizo foi feito, e transforma-lo
-em aviso reconstruiria o falso PASS que a spec proibe.
+**`null` differs from `0`.** Null means unlimited; zero rejects any positive
+value for that metric. A valid glTF can reference external files, so
+`requireSelfContained` adds a portability requirement beyond format validation.
+For the original calibration rationale, see
+[docs/calibracao-tumbler.md](../docs/calibracao-tumbler.md) (Portuguese).
 
-**`null` nao e `0`.** `null` e "sem teto"; `0` e "teto zero", que reprova
-qualquer asset. A distincao e explicita porque um campo esquecido nao pode
-reprovar tudo em silencio.
+`extends` must be `null`: inheritance is not implemented. PROFILE requires
+SCHEMA. At least one layer must be enabled.
 
-### Por que autocontencao e um teste que vale
-
-Um GLB com URI externa e glTF **valido** — o validator nao o acusa, e nao
-deveria. Ele funciona na maquina de quem exportou e quebra em qualquer outra.
-E a classe de defeito silencioso que um juiz de aceitacao existe para pegar, e
-a informacao ja vinha no relatorio sem custo nenhum.
-
-Origem dos numeros e do racional: `docs/calibracao-tumbler.md`.
+Diagnostics and JSON fields are English regardless of interface language.
+The unpublished 0.1.0 candidate uses `got.usage` and `got.omitted` instead of
+the earlier Portuguese keys. Diagnostic codes and acceptance rules are unchanged.

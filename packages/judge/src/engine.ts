@@ -1,9 +1,6 @@
 import { supportedExtensions, version } from "gltf-validator";
 
-/**
- * Versoes do runtime que assinam o veredito. A tupla (assetHash, profileHash,
- * engineVersion) do invariante 1 so vale se o engine se identificar.
- */
+/** Runtime versions included in report provenance. */
 export function engineVersions(): {
   gltfValidator: string;
   gltfExtensions: string[];

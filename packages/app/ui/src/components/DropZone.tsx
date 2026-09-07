@@ -1,4 +1,6 @@
-import { useId, useRef, useState, type DragEvent, type ChangeEvent } from "react";
+import { useLocale } from "../locale.js";
+import { formatBytes } from "@judg3d/core/present";
+import { useId, useState, type DragEvent, type ChangeEvent } from "react";
 
 type DropZoneProps = {
   file: File | null;
@@ -7,14 +9,21 @@ type DropZoneProps = {
 };
 
 export function DropZone({ file, disabled, onFile }: DropZoneProps) {
+  const { locale, t } = useLocale();
   const inputId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState(false);
   const [hot, setHot] = useState(false);
 
   function accept(next: File | null): void {
     if (disabled) {
       return;
     }
+    if (next !== null && next.size > 64 * 1024 * 1024) {
+      setError(true);
+      onFile(null);
+      return;
+    }
+    setError(false);
     onFile(next);
   }
 
@@ -54,27 +63,29 @@ export function DropZone({ file, disabled, onFile }: DropZoneProps) {
     >
       <input
         id={inputId}
-        ref={inputRef}
         type="file"
         accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
         disabled={disabled}
         onChange={onChange}
       />
-      <span className="dropzone__eyebrow">asset</span>
+      <span className="dropzone__eyebrow">{t.asset}</span>
       {file === null ? (
         <>
-          <strong className="dropzone__title">Solte o GLB aqui</strong>
-          <span className="dropzone__hint">
-            ou clique para escolher · .glb / .gltf
-          </span>
+          <strong className="dropzone__title">{t.dropTitle}</strong>
+          <span className="dropzone__hint">{t.dropHint}</span>
         </>
       ) : (
         <>
           <strong className="dropzone__title">{file.name}</strong>
           <span className="dropzone__hint">
-            {(file.size / 1024).toFixed(1)} KB · clique para trocar
+            {formatBytes(file.size, locale)} · {t.changeFile}
           </span>
         </>
+      )}
+      {!error ? null : (
+        <span role="alert" className="dropzone__error">
+          {t.fileTooLarge}
+        </span>
       )}
     </label>
   );

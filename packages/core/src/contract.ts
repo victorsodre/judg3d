@@ -1,10 +1,6 @@
-/**
- * Contrato do judg3d. Os tipos abaixo sao a transcricao direta de
- * `docs/judg3d-spec-v0.md` — nao inventar campos aqui: o que a spec nao
- * decidiu vai no envelope do relatorio (`report.ts`), nao no Verdict.
- */
+/** The product contract follows the spec; provenance belongs in report.ts. */
 
-/** Caixa 2D em pixels dentro de uma view renderizada. */
+/** Pixel bounds in a rendered view. */
 export type Box = {
   x: number;
   y: number;
@@ -12,7 +8,7 @@ export type Box = {
   height: number;
 };
 
-/** Camadas do juiz, na ordem em que rodam. */
+/** Canonical layer order. */
 export const LAYER_KINDS = [
   "SCHEMA",
   "PROFILE",
@@ -27,10 +23,10 @@ export type Severity = "error" | "warn";
 
 export type Violation = {
   kind: LayerKind;
-  /** Codigo estavel e acionavel: "UV_OVERLAP", "SCALE_MISMATCH", "VIEW_DIFF"... */
+  /** Stable, actionable diagnostic code, such as MATERIALS_OVER_BUDGET. */
   code: string;
   severity: Severity;
-  /** JSON pointer no glTF, ou `offset:<n>` para problemas no container GLB. */
+  /** glTF JSON pointer or a container byte offset. */
   nodePath?: string;
   view?: number;
   bbox2d?: Box;
@@ -38,45 +34,31 @@ export type Violation = {
   want: unknown;
 };
 
-/**
- * Render de camera fixa com as violacoes marcadas. Sempre vazio na v0:
- * o rasterizador de software entra na camada VISUAL (L4).
- */
+/** Fixed-camera renders are reserved for the VISUAL layer. */
 export type AnnotatedRender = {
-  /** Indice da camera no rig — enderecavel e comparavel contra baseline. */
+  /** Camera index in the render rig. */
   view: number;
-  /** Caminho do PNG gravado ao lado do relatorio. */
+  /** PNG path relative to the report. */
   path: string;
   width: number;
   height: number;
-  /** Violacoes desta view, com bbox2d preenchida. */
+  /** View-specific violations with pixel bounds. */
   annotations: Violation[];
 };
 
-/**
- * Metricas do asset. A spec pede tris, materiais, draw calls, dims e vram.
- * As que ainda nao tem camada que as compute ficam opcionais em vez de
- * receber zero — zero seria mentira, ausente e honesto.
- */
+/** Uncomputed optional metrics remain absent; zero would imply a measurement. */
 export type MeshMetrics = {
-  /** Total de triangulos somando todas as primitivas. */
+  /** Total triangles across all primitives. */
   triangles: number;
-  /** Total de vertices somando todas as primitivas. */
+  /** Total vertices across all primitives. */
   vertices: number;
   materials: number;
   drawCalls: number;
-  /** Dimensoes do bounding box em unidades do asset. Vem com L3. */
+  /** Bounding box dimensions in asset units; reserved for GEOMETRY. */
   dimensions?: { x: number; y: number; z: number };
-  /** Estimativa de VRAM em bytes (geometria + texturas). Vem com L3. */
+  /** Estimated geometry and texture VRAM; reserved for GEOMETRY. */
   vramEstimateBytes?: number;
-  /**
-   * Texturas do asset. Vem com L2, ausente sem ela.
-   *
-   * Existe porque `materials` conta materiais e nao diz nada sobre o conteudo
-   * deles: numa calibracao de 78 rodadas, a mudanca que mais alterou a imagem
-   * produziu duas linhas identicas na serie de metricas. Resolucao e o primeiro
-   * atributo de material que da para medir sem abrir o JSON do glTF.
-   */
+  /** Texture measurements from PROFILE. Material count alone does not measure image content; see docs/calibracao-tumbler.md. */
   textures?: { count: number; maxSize: number };
 };
 
@@ -87,7 +69,7 @@ export type Verdict = {
   metrics: MeshMetrics;
 };
 
-/** Metricas de um asset que nenhuma camada conseguiu medir. */
+/** Fallback for assets that cannot be measured. The corresponding diagnostic must explain the failure. */
 export const EMPTY_METRICS: MeshMetrics = {
   triangles: 0,
   vertices: 0,

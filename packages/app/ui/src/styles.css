@@ -14,8 +14,8 @@
   --warn-soft: #f5e6c8;
   --accent: #1f6feb;
   --shadow: 0 24px 60px rgba(11, 28, 44, 0.12);
-  --font-display: "Bricolage Grotesque", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
   --radius: 18px;
 }
 
@@ -58,9 +58,22 @@ pre {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(1000px 520px at 8% -10%, rgba(31, 111, 235, 0.18), transparent 60%),
-    radial-gradient(800px 480px at 92% 0%, rgba(15, 143, 108, 0.14), transparent 55%),
-    linear-gradient(180deg, #f5f8fc 0%, var(--paper) 45%, var(--paper-deep) 100%);
+    radial-gradient(
+      1000px 520px at 8% -10%,
+      rgba(31, 111, 235, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 480px at 92% 0%,
+      rgba(15, 143, 108, 0.14),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      #f5f8fc 0%,
+      var(--paper) 45%,
+      var(--paper-deep) 100%
+    );
 }
 
 .atmosphere::after {
@@ -89,6 +102,27 @@ pre {
   max-width: 72rem;
   margin: 0 auto;
   width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.brand__identity {
+  min-width: 0;
+}
+.language-picker {
+  flex: 0 0 12rem;
+}
+@media (max-width: 600px) {
+  .brand {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .language-picker {
+    flex: initial;
+    width: min(100%, 16rem);
+  }
 }
 
 .brand__mark {
@@ -114,6 +148,60 @@ pre {
   display: grid;
   gap: 1.25rem;
   align-content: start;
+}
+
+.stage > *,
+.compose > * {
+  min-width: 0;
+}
+.dropzone__title,
+.verdict__meta,
+.violation {
+  overflow-wrap: anywhere;
+}
+.dropzone:focus-within,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.compose__coverage {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.verdict__coverage {
+  padding: 0 1.4rem 1rem;
+  font-size: 0.9rem;
+}
+.verdict__coverage p {
+  margin: 0.25rem 0;
+}
+.violation-tools {
+  padding: 0 1.4rem 1rem;
+}
+.violation-tools .btn + .btn {
+  margin-left: 0.5rem;
+}
+.violation-tools label {
+  max-width: 36rem;
+}
+.violation-tools p {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.dropzone__error {
+  color: var(--danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .compose {

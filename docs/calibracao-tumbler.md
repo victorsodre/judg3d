@@ -3,7 +3,7 @@ tags: [projeto/judg3d, calibracao]
 updated: 2026-08-22
 ---
 
-# Calibração contra um pipeline real — 78 rodadas
+# Calibração contra um pipeline real — 78 rodadas do projeto, 7 execuções registradas
 
 O `judg3d` rodou como portão de aceitação dentro do `tumbler-three`, um projeto
 de modelagem 3D conduzido por agente em loop fechado, entre 21 e 22/08/2026.
@@ -25,17 +25,18 @@ numeradas, estão em `tumbler-three/gauntlet/judg3d-notas.md`.
 | Reprovações do critic no período | **~30** |
 | Defeitos que só o critic pegou | **todos, menos um** |
 
-Zero `exit 2` em 78 rodadas é o dado positivo e vale registrar: a infra nunca
-falhou, nunca produziu diagnóstico falso, e a distinção entre reprovação e
-falha de infra nunca precisou ser explicada a ninguém.
+Nas **sete execuções registradas** dessa amostra, não houve `exit 2`. Isso não
+comprova execução ou ausência de falhas em todas as 78 rodadas do projeto.
+Este é um registro histórico do mantenedor; os logs brutos não estão neste
+repositório e os números não representam adoção independente ou benchmark.
 
 O resto é o que este documento existe para consertar.
 
 ## As quatro hipóteses da calibração
 
 **H1 — "a L1 não reprova quase nada num pipeline de autoria": confirmada.**
-Zero `exit 1` em 78 rodadas. O exportador do three gerou glTF válido em todas
-elas, inclusive com hierarquia de nós nomeados e 45 materiais. A L1 continua
+Zero `exit 1` nas sete execuções registradas. As 78 rodadas pertencem ao
+projeto de autoria; não há 78 vereditos do judg3d nessa amostra. A L1 continua
 essencial para asset de terceiro — mas para quem *cria* o asset, ela é um
 portão que quase nunca fecha.
 

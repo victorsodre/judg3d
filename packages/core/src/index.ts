@@ -50,3 +50,9 @@ export {
 } from "./profile.js";
 
 export { serializeReport, type JudgeReport } from "./report.js";
+
+export {
+  readBoundedFile,
+  MAX_ASSET_BYTES,
+  MAX_PROFILE_BYTES,
+} from "./files.js";

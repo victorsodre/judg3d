@@ -1,31 +1,33 @@
+import { useLocale } from "../locale.js";
 import type { MeshMetrics } from "../types";
 
 type MetricsBarProps = {
   metrics: MeshMetrics;
-  layers: string[];
 };
 
-export function MetricsBar({ metrics, layers }: MetricsBarProps) {
+export function MetricsBar({ metrics }: MetricsBarProps) {
+  const { locale, t } = useLocale();
+  const number = new Intl.NumberFormat(locale);
   const cells = [
-    { label: "tris", value: String(metrics.triangles) },
-    { label: "verts", value: String(metrics.vertices) },
-    { label: "materiais", value: String(metrics.materials) },
-    { label: "draw calls", value: String(metrics.drawCalls) },
+    { label: t.triangles, value: number.format(metrics.triangles) },
+    { label: t.vertices, value: number.format(metrics.vertices) },
+    { label: t.materials, value: number.format(metrics.materials) },
+    { label: t.drawCalls, value: number.format(metrics.drawCalls) },
   ];
 
   if (metrics.textures !== undefined) {
     const { count, maxSize } = metrics.textures;
     cells.push({
-      label: "texturas",
-      value: `${String(count)} · até ${String(maxSize)}px`,
+      label: t.textures,
+      value: `${number.format(count)} · ${t.upTo} ${number.format(maxSize)}px`,
     });
   }
 
   if (metrics.dimensions !== undefined) {
     const { x, y, z } = metrics.dimensions;
     cells.push({
-      label: "dims",
-      value: `${String(x)}×${String(y)}×${String(z)}`,
+      label: t.dimensions,
+      value: `${number.format(x)}×${number.format(y)}×${number.format(z)}`,
     });
   }
 
@@ -39,7 +41,6 @@ export function MetricsBar({ metrics, layers }: MetricsBarProps) {
           </div>
         ))}
       </div>
-      <p className="metrics__layers">camadas · {layers.join(" · ")}</p>
     </div>
   );
 }

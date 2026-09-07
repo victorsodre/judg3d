@@ -1,7 +1,7 @@
 {
   "name": "@judg3d/core",
-  "version": "0.0.0",
-  "description": "Contrato Verdict/Violation, profile-as-code e envelope do judge-report do judg3d.",
+  "version": "0.1.0",
+  "description": "Verdict/Violation contracts, profile-as-code and deterministic judg3d reports.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,13 +16,32 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=11"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "zod": "4.4.3"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorsodre/judg3d.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/victorsodre/judg3d#readme",
+  "bugs": {
+    "url": "https://github.com/victorsodre/judg3d/issues"
+  },
+  "keywords": [
+    "gltf",
+    "glb",
+    "3d",
+    "validation",
+    "asset-pipeline",
+    "mcp"
+  ]
 }

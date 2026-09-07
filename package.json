@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22",
+    "node": ">=22.13.0",
     "pnpm": ">=11"
   },
   "scripts": {
-    "build": "tsc --build && pnpm --filter @judg3d/app build:ui",
+    "build": "node tools/clean-build.mjs && tsc --build && node tools/build-assets.mjs && pnpm --filter @judg3d/app build:ui",
     "typecheck": "tsc --build --force && tsc -p tsconfig.test.json && tsc -p packages/app/tsconfig.ui.json --noEmit",
     "lint": "eslint .",
     "test": "tsc --build && vitest run",
@@ -16,7 +16,11 @@
     "app:build": "pnpm --filter @judg3d/app build",
     "app:start": "pnpm --filter @judg3d/app start",
     "fixtures:fetch": "node fixtures/scripts/fetch-khronos.mjs",
-    "fixtures:broken": "node fixtures/scripts/make-quebrado.mjs"
+    "fixtures:broken": "node fixtures/scripts/make-quebrado.mjs",
+    "release:pack": "pnpm build && node tools/pack-release.mjs",
+    "release:check": "node tools/check-release.mjs",
+    "demo": "pnpm build && node examples/acceptance-gate/run.mjs",
+    "docs:check": "node tools/check-project.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -26,5 +30,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
     "vitest": "4.1.11"
-  }
+  },
+  "packageManager": "pnpm@11.22.0",
+  "license": "MIT"
 }

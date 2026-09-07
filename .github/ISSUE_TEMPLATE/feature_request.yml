@@ -1,0 +1,21 @@
+name: Feature or integration request
+description: Describe a workflow that judg3d does not support yet.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Workflow and problem
+      description: Who needs this, what asset pipeline is involved, and what is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Observable success
+      description: What would demonstrate the change works? Include possible profile rules or integration constraints.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -1,3 +1,4 @@
+import { LocaleProvider } from "./locale.js";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -6,11 +7,13 @@ import "./styles.css";
 
 const root = document.getElementById("root");
 if (root === null) {
-  throw new Error("Elemento #root nao encontrado.");
+  throw new Error("Missing #root element.");
 }
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <LocaleProvider>
+      <App />
+    </LocaleProvider>
   </StrictMode>,
 );

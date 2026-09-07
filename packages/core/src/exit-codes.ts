@@ -1,7 +1,4 @@
-/**
- * Exit codes do judg3d. Distintos de proposito: um CI que trata "!= 0" como
- * reprovacao ainda funciona, e um que quer separar infra de veredito tambem.
- */
+/** Stable exit codes distinguish acceptance, rejection and infrastructure failure. */
 export const EXIT_PASS = 0;
 export const EXIT_FAIL = 1;
 export const EXIT_INFRA = 2;

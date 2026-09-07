@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { GltfIssue } from "gltf-validator";
 import type { SchemaLayerConfig } from "@judg3d/core";
 
-import { append, aplicarTetoPorCodigo, TRUNCATED_CODE } from "../src/index.js";
+import { append, capIssuesPerCode, TRUNCATED_CODE } from "../src/index.js";
 
 /**
  * Regressao de um asset real: um GLB de producao de 202 mil faces (rip de
@@ -32,19 +32,19 @@ function issue(code: string, i: number): GltfIssue {
 
 describe("append — o crash que o spread causava", () => {
   it("aguenta mais elementos do que cabe numa lista de argumentos", () => {
-    const alvo: number[] = [];
-    const origem = Array.from({ length: ISSUES_DO_ASSET_REAL }, (_, i) => i);
-    // `alvo.push(...origem)` estoura aqui. Um laco nao.
-    expect(() => { append(alvo, origem); }).not.toThrow();
-    expect(alvo.length).toBe(ISSUES_DO_ASSET_REAL);
-    expect(alvo[0]).toBe(0);
-    expect(alvo.at(-1)).toBe(ISSUES_DO_ASSET_REAL - 1);
+    const target: number[] = [];
+    const source = Array.from({ length: ISSUES_DO_ASSET_REAL }, (_, i) => i);
+    // `target.push(...source)` estoura aqui. Um laco nao.
+    expect(() => { append(target, source); }).not.toThrow();
+    expect(target.length).toBe(ISSUES_DO_ASSET_REAL);
+    expect(target[0]).toBe(0);
+    expect(target.at(-1)).toBe(ISSUES_DO_ASSET_REAL - 1);
   });
 
   it("preserva a ordem, que e por onde alguem comeca a consertar", () => {
-    const alvo = ["a"];
-    append(alvo, ["b", "c"]);
-    expect(alvo).toEqual(["a", "b", "c"]);
+    const target = ["a"];
+    append(target, ["b", "c"]);
+    expect(target).toEqual(["a", "b", "c"]);
   });
 });
 
@@ -56,13 +56,13 @@ describe("teto por codigo", () => {
   ];
 
   it("com 0, nao corta nada — o comportamento antigo nao muda", () => {
-    const v = aplicarTetoPorCodigo(muitas, config(0));
+    const v = capIssuesPerCode(muitas, config(0));
     expect(v.length).toBe(508);
     expect(v.some((x) => x.code === TRUNCATED_CODE)).toBe(false);
   });
 
   it("corta por codigo e preserva a DIVERSIDADE", () => {
-    const v = aplicarTetoPorCodigo(muitas, config(5));
+    const v = capIssuesPerCode(muitas, config(5));
     const porCodigo = new Map<string, number>();
     for (const x of v) porCodigo.set(x.code, (porCodigo.get(x.code) ?? 0) + 1);
 
@@ -74,28 +74,28 @@ describe("teto por codigo", () => {
   });
 
   it("declara o que omitiu, ordenado por volume", () => {
-    const v = aplicarTetoPorCodigo(muitas, config(5));
+    const v = capIssuesPerCode(muitas, config(5));
     const t = v.find((x) => x.code === TRUNCATED_CODE);
     expect(t).toBeDefined();
     expect(t?.severity).toBe("warn");
-    const got = t?.got as { omitidas: Record<string, number> };
-    expect(got.omitidas).toEqual({ JOINTS_ZERO_WEIGHT: 495, UNUSED_OBJECT: 2 });
-    expect(Object.keys(got.omitidas)[0]).toBe("JOINTS_ZERO_WEIGHT");
+    const got = t?.got as { omitted: Record<string, number> };
+    expect(got.omitted).toEqual({ JOINTS_ZERO_WEIGHT: 495, UNUSED_OBJECT: 2 });
+    expect(Object.keys(got.omitted)[0]).toBe("JOINTS_ZERO_WEIGHT");
   });
 
   it("nao corta quando cada codigo aparece uma vez — quebrado.glb e assim", () => {
     const quatroDistintos = ["UNDEFINED_PROPERTY", "TYPE_MISMATCH", "UNRESOLVED_REFERENCE", "UNUSED_OBJECT"]
       .map((c, i) => issue(c, i));
-    const v = aplicarTetoPorCodigo(quatroDistintos, config(1));
+    const v = capIssuesPerCode(quatroDistintos, config(1));
     expect(v.length).toBe(4);
     expect(v.some((x) => x.code === TRUNCATED_CODE)).toBe(false);
   });
 
   it("o numero do asset real cabe no teto sem estourar", () => {
     const reais = Array.from({ length: DO_MESMO_CODIGO }, (_, i) => issue("JOINTS_ZERO_WEIGHT", i));
-    const v = aplicarTetoPorCodigo(reais, config(50));
+    const v = capIssuesPerCode(reais, config(50));
     expect(v.length).toBe(51); // 50 + a violacao de truncamento
-    const got = v.at(-1)?.got as { omitidas: Record<string, number> };
-    expect(got.omitidas["JOINTS_ZERO_WEIGHT"]).toBe(DO_MESMO_CODIGO - 50);
+    const got = v.at(-1)?.got as { omitted: Record<string, number> };
+    expect(got.omitted["JOINTS_ZERO_WEIGHT"]).toBe(DO_MESMO_CODIGO - 50);
   });
 });

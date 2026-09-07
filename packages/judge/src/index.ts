@@ -11,7 +11,8 @@ export {
   runSchemaLayer,
   UNPARSEABLE_CODE,
   TRUNCATED_CODE,
-  aplicarTetoPorCodigo,
+  capIssuesPerCode,
+  capIssuesPerCode as aplicarTetoPorCodigo,
   type SchemaLayerResult,
 } from "./layers/l1-schema.js";
 
@@ -23,3 +24,5 @@ export {
 } from "./layers/l2-profile.js";
 
 export { engineVersions } from "./engine.js";
+
+export { judgeIsolated } from "./isolated.js";

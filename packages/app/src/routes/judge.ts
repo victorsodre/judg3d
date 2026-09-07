@@ -1,7 +1,9 @@
-import { join } from "node:path";
+import { apiError } from "../api-errors.js";
+import { resolveProfileFile } from "./profiles.js";
 
 import {
   serializeReport,
+  MAX_ASSET_BYTES,
   type JudgeReport,
 } from "@judg3d/core";
 import type { Context } from "hono";
@@ -16,13 +18,7 @@ export type JudgeSuccessBody = {
   serialized: string;
 };
 
-export type JudgeErrorBody = {
-  ok: false;
-  exitHint: 2;
-  error: "infra" | "bad_request";
-  message: string;
-  detail?: string;
-};
+export type { JudgeErrorBody } from "../api-errors.js";
 
 function asFile(value: unknown): File | undefined {
   if (value instanceof File) {
@@ -34,18 +30,19 @@ function asFile(value: unknown): File | undefined {
 export function createJudgeHandler(profilesDir: string, timeoutMs = 30_000) {
   return async function judgeHandler(c: Context): Promise<Response> {
     try {
-      const body = await c.req.parseBody({ all: true });
+      let body;
+      try {
+        body = await c.req.parseBody({ all: true });
+      } catch {
+        return c.json(apiError("INVALID_MULTIPART"), 400);
+      }
       const asset = asFile(body["asset"]);
       if (asset === undefined) {
-        return c.json(
-          {
-            ok: false,
-            exitHint: 2,
-            error: "bad_request",
-            message: "Envie o arquivo GLB no campo multipart \"asset\".",
-          } satisfies JudgeErrorBody,
-          400,
-        );
+        return c.json(apiError("ASSET_REQUIRED"), 400);
+      }
+
+      if (asset.size > MAX_ASSET_BYTES) {
+        return c.json(apiError("UPLOAD_TOO_LARGE"), 413);
       }
 
       const profileField = body["profile"];
@@ -54,23 +51,28 @@ export function createJudgeHandler(profilesDir: string, timeoutMs = 30_000) {
           ? profileField.trim()
           : "web-commerce.json";
 
-      if (profileName.includes("/") || profileName.includes("\\") || profileName.includes("..")) {
-        return c.json(
-          {
-            ok: false,
-            exitHint: 2,
-            error: "bad_request",
-            message: "Nome de profile invalido.",
-          } satisfies JudgeErrorBody,
-          400,
-        );
+      if (
+        profileName.includes("/") ||
+        profileName.includes("\\") ||
+        profileName.includes("..")
+      ) {
+        return c.json(apiError("INVALID_PROFILE"), 400);
       }
 
-      const profilePath = join(profilesDir, profileName);
+      let profilePath: string;
+      try {
+        profilePath = await resolveProfileFile(profilesDir, profileName);
+      } catch {
+        return c.json(apiError("PROFILE_NOT_FOUND"), 400);
+      }
       const bytes = new Uint8Array(await asset.arrayBuffer());
       const uri = asset.name.trim() !== "" ? asset.name : "upload.glb";
 
-      const report = await runJudgeJob({ bytes, uri, profilePath, version: APP_VERSION }, timeoutMs);
+      const report = await runJudgeJob(
+        { bytes, uri, profilePath, version: APP_VERSION },
+        timeoutMs,
+        c.req.raw.signal,
+      );
 
       const payload: JudgeSuccessBody = {
         ok: true,
@@ -81,25 +83,9 @@ export function createJudgeHandler(profilesDir: string, timeoutMs = 30_000) {
       return c.json(payload);
     } catch (error) {
       if (error instanceof JudgeJobError) {
-        return c.json(
-          {
-            ok: false,
-            exitHint: 2,
-            error: "infra",
-            message: error.message,
-          } satisfies JudgeErrorBody,
-          500,
-        );
+        return c.json(apiError("ANALYSIS_FAILED", "infra"), 500);
       }
-      return c.json(
-        {
-          ok: false,
-          exitHint: 2,
-          error: "infra",
-          message: "Falha inesperada ao julgar o asset.",
-        } satisfies JudgeErrorBody,
-        500,
-      );
+      return c.json(apiError("INTERNAL_ERROR", "infra"), 500);
     }
   };
 }

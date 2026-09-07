@@ -71,7 +71,7 @@ describe("parseProfile", () => {
   it("rejeita chave desconhecida em vez de ignorar em silencio", () => {
     const raw = profileWith({ budgetMaxTris: 5000 });
     expect(() => parseProfile(raw, "teste.json")).toThrow(InfraError);
-    expect(() => parseProfile(raw, "teste.json")).toThrow(/Profile invalido/);
+    expect(() => parseProfile(raw, "teste.json")).toThrow(/Invalid profile/);
   });
 
   it("rejeita typo dentro da camada SCHEMA", () => {

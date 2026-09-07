@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import {
   version as gltfValidatorVersion,
   type GltfValidationInfo,
@@ -6,17 +5,17 @@ import {
 
 import {
   EMPTY_METRICS,
+  readBoundedFile,
+  MAX_ASSET_BYTES,
   InfraError,
   LAYER_KINDS,
   assertLayersImplemented,
   enabledLayers,
   sha256Hex,
-  type FailOn,
   type JudgeReport,
   type LayerKind,
   type LoadedProfile,
   type MeshMetrics,
-  type Profile,
   type Verdict,
   type Violation,
 } from "@judg3d/core";
@@ -24,22 +23,19 @@ import {
 import { runSchemaLayer } from "./layers/l1-schema.js";
 import { runProfileLayer } from "./layers/l2-profile.js";
 
-/**
- * `Verdict = judge(asset, profile)` — funcao pura no que importa: os mesmos
- * bytes com o mesmo profile e o mesmo engine sempre dao o mesmo veredito.
- */
+/** Identical asset/profile bytes and engine versions must produce the same verdict. */
 
 export type JudgeInput = {
-  /** Bytes do asset. */
+  /** Original asset bytes. */
   bytes: Uint8Array;
-  /** Caminho ou URL, so para o relatorio e para as mensagens do validator. */
+  /** Report URI only; it is never fetched. */
   uri: string;
 };
 
 export type JudgeOptions = {
-  /** Versao do judg3d que assina o relatorio. */
+  /** judg3d version included in the report. */
   judg3dVersion: string;
-  /** Inclui `generatedAt`. Fora por padrao: relatorio sem timestamp e byte-deterministico. */
+  /** Opt-in timestamp; disabled for deterministic output. */
   timestamp?: boolean;
 };
 
@@ -50,23 +46,17 @@ export type JudgeOutcome = {
 
 export async function readAsset(path: string): Promise<JudgeInput> {
   try {
-    const bytes = await readFile(path);
+    const bytes = await readBoundedFile(path, MAX_ASSET_BYTES);
     return { bytes: new Uint8Array(bytes), uri: path };
   } catch (cause) {
     throw new InfraError(
-      `Nao consegui ler o asset: ${path}`,
+      `Could not read asset: ${path}`,
       cause instanceof Error ? cause.message : String(cause),
     );
   }
 }
 
-/**
- * Roda as camadas ligadas no profile e compoe o Verdict.
- *
- * Lanca `InfraError` — que o CLI traduz em exit 2 — quando o profile pede uma
- * camada que esta versao nao implementa. Um PASS que na verdade significa
- * "essa checagem nem rodou" e o unico resultado que nao pode existir.
- */
+/** Compose enabled layers; unsupported configuration is an infrastructure failure. */
 export async function judge(
   input: JudgeInput,
   loaded: LoadedProfile,
@@ -79,6 +69,7 @@ export async function judge(
   const violations: Violation[] = [];
   let metrics: MeshMetrics = { ...EMPTY_METRICS };
   let info: GltfValidationInfo | undefined;
+  let pass = true;
 
   if (profile.layers.schema.enabled) {
     const result = await runSchemaLayer(
@@ -89,18 +80,26 @@ export async function judge(
     append(violations, result.violations);
     metrics = result.metrics;
     info = result.report?.info;
+    pass = result.pass;
   }
 
   if (profile.layers.profile.enabled) {
     const result = runProfileLayer(info, metrics, profile.layers.profile);
     append(violations, result.violations);
     metrics = result.metrics;
+    pass =
+      pass &&
+      !result.violations.some(
+        (violation) =>
+          violation.severity === "error" ||
+          profile.layers.profile.failOn === "warn",
+      );
   }
 
   const verdict: Verdict = {
-    pass: computePass(violations, profile),
+    pass,
     violations,
-    // Views entram com a camada VISUAL (L4), na sessao do rasterizador.
+    // Renders are reserved for the VISUAL layer.
     views: [],
     metrics,
   };
@@ -111,49 +110,11 @@ export async function judge(
   };
 }
 
-/**
- * Concatena sem espalhar.
- *
- * `alvo.push(...origem)` passa cada elemento como ARGUMENTO, e o numero de
- * argumentos de uma chamada tem teto — na pratica algo entre 60 e 125 mil no
- * V8. Um GLB de producao de 202 mil faces produziu **632 379** violacoes no
- * validator da Khronos e derrubou o comando com `RangeError: Maximum call
- * stack size exceeded`.
- *
- * O tamanho da entrada do usuario nunca pode virar tamanho de lista de
- * argumentos. Um laco nao tem teto.
- */
-export function append<T>(alvo: T[], origem: readonly T[]): void {
-  for (const item of origem) {
-    alvo.push(item);
+/** Append iteratively: large validator reports can exceed the argument limit of push(...items). */
+export function append<T>(target: T[], source: readonly T[]): void {
+  for (const item of source) {
+    target.push(item);
   }
-}
-
-/**
- * Invariante 2: quem decide o que reprova e o profile. `failOn: "error"` deixa
- * avisos passarem; `failOn: "warn"` reprova neles tambem.
- *
- * O `failOn` e **por camada**, e cada violacao carrega o `kind` de quem a
- * emitiu. Um profile que tolera aviso de schema num asset de terceiro nao
- * deveria, por isso, tolerar aviso de orcamento — sao decisoes diferentes e
- * amarra-las esconderia uma delas.
- */
-function computePass(violations: readonly Violation[], profile: Profile): boolean {
-  // Espalhado condicionalmente, e nao com `undefined`: sob
-  // `exactOptionalPropertyTypes` a chave ausente e a chave com valor undefined
-  // sao coisas diferentes, e aqui a diferenca e real — camada desligada nao tem
-  // failOn nenhum.
-  const failOnByKind: Partial<Record<LayerKind, FailOn>> = {
-    SCHEMA: profile.layers.schema.failOn,
-    ...(profile.layers.profile.enabled
-      ? { PROFILE: profile.layers.profile.failOn }
-      : {}),
-  };
-
-  return !violations.some((violation) => {
-    const failOn = failOnByKind[violation.kind] ?? "error";
-    return failOn === "warn" || violation.severity === "error";
-  });
 }
 
 function buildReport(
@@ -182,9 +143,8 @@ function buildReport(
     },
     coverage: {
       ran: layers,
-      // Tudo que nao correu, seja por estar desligado no profile ou por nao
-      // existir nesta versao. A distincao nao importa para quem le o veredito:
-      // nos dois casos aquela dimensao nao foi julgada.
+      // Explicit coverage prevents unperformed checks from being interpreted as successful checks.
+
       skipped: LAYER_KINDS.filter((kind) => !layers.includes(kind)),
     },
     ...(options.timestamp === true

@@ -116,11 +116,12 @@ describe("L2 PROFILE nos fixtures reais", () => {
     expect(verdict.pass).toBe(false);
     expect(verdict.violations).toContainEqual({
       kind: "PROFILE",
+      nodePath: "",
       code: "TRIANGLES_OVER_BUDGET",
       severity: "error",
-      // `uso` entrou com o nearLimit: 12/4 = 3,0, ou seja 300% do teto.
+      // `usage` entrou com o nearLimit: 12/4 = 3,0, ou seja 300% do teto.
       // "value 12, max 4" e "300% do teto" nao custam o mesmo para quem le.
-      got: { metric: "triangles", value: 12, uso: 3 },
+      got: { metric: "triangles", value: 12, usage: 3 },
       want: { metric: "triangles", max: 4 },
     });
   });
@@ -135,7 +136,11 @@ describe("L2 PROFILE nos fixtures reais", () => {
     const violation = verdict.violations.find(
       (v) => v.code === "TEXTURE_OVER_BUDGET",
     );
-    expect(violation?.got).toEqual({ metric: "maxTextureSize", value: 256, uso: 2 });
+    expect(violation?.got).toEqual({
+      metric: "maxTextureSize",
+      value: 256,
+      usage: 2,
+    });
   });
 });
 
@@ -197,7 +202,11 @@ describe("L2 PROFILE — orcamento", () => {
     );
     // Triangulos em 0,7% do teto e draw calls em 58%: so material estoura.
     expect(violations.map((v) => v.code)).toEqual(["MATERIALS_OVER_BUDGET"]);
-    expect(violations[0]?.got).toEqual({ metric: "materials", value: 35, uso: 1.75 });
+    expect(violations[0]?.got).toEqual({
+      metric: "materials",
+      value: 35,
+      usage: 1.75,
+    });
   });
 });
 
@@ -209,7 +218,7 @@ describe("L2 PROFILE — autocontencao", () => {
     ],
   });
 
-  it("reprova recurso fora do container e aponta o pointer", () => {
+  it("reprova recurso skipped do container e aponta o pointer", () => {
     const { violations } = runProfileLayer(externo, L1_METRICS, {
       enabled: true,
       failOn: "error",
@@ -256,6 +265,36 @@ describe("L2 PROFILE — autocontencao", () => {
 });
 
 describe("L2 PROFILE — o que nao pode acontecer", () => {
+  it("imagem não medida não recebe tamanho zero nem passa pelo orçamento", async () => {
+    const loaded = withBudgets(
+      { maxTextureSize: 2048 },
+      { requireSelfContained: false },
+    );
+    loaded.profile.layers.schema.ignoredIssues = ["IO_ERROR"];
+    const asset = {
+      asset: { version: "2.0" },
+      images: [{ uri: "texture.png" }],
+      textures: [{ source: 0 }],
+    };
+    const { verdict } = await judge(
+      {
+        bytes: new TextEncoder().encode(JSON.stringify(asset)),
+        uri: "external.gltf",
+      },
+      loaded,
+      OPTIONS,
+    );
+    expect(verdict.pass).toBe(false);
+    expect(verdict.metrics.textures).toBeUndefined();
+    expect(verdict.violations).toContainEqual(
+      expect.objectContaining({
+        kind: "PROFILE",
+        code: "TEXTURE_METRICS_UNAVAILABLE",
+        severity: "error",
+        nodePath: "/images/0",
+      }),
+    );
+  });
   it("sem metricas, acusa em vez de aprovar em silencio", () => {
     const { violations } = runProfileLayer(undefined, L1_METRICS, {
       enabled: true,
@@ -313,7 +352,7 @@ describe("L2 PROFILE — severidade decidida pelo profile", () => {
     );
     expect(violations[0]?.severity).toBe("warn");
 
-    // O caso de uso real: num loop de autoria, orcamento estourado numa rodada
+    // O caso de usage real: num loop de autoria, orcamento estourado numa rodada
     // intermediaria e um gap a fechar, nao motivo para parar o trabalho.
     const { verdict } = await judge(
       await readAsset(fixture("valido.glb")),
@@ -391,7 +430,7 @@ describe("nearLimit — o aviso antes da parede", () => {
     expect(violations[0]?.got).toEqual({
       metric: "triangles",
       value: 311_784,
-      uso: 0.891,
+      usage: 0.891,
     });
   });
 
@@ -416,7 +455,7 @@ describe("nearLimit — o aviso antes da parede", () => {
     expect(violations[0]?.got).toEqual({
       metric: "triangles",
       value: 400_000,
-      uso: 1.143,
+      usage: 1.143,
     });
   });
 });

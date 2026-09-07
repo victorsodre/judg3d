@@ -1,26 +1,15 @@
-/**
- * Declaracao de tipos do pacote oficial `gltf-validator` da Khronos, que e
- * compilado de Dart e nao publica tipos (`@types/gltf-validator` nao existe).
- *
- * Escrito a partir de `module.mjs` e de `lib/src/validation_result.dart` na
- * versao 2.0.0-dev.3.10. Duas coisas que a documentacao em prosa nao deixa
- * claras e valem o comentario:
- *
- *  - No build ESM, `version` e `supportedExtensions` sao FUNCOES, nao valores.
- *  - `report.info` some inteiro quando `asset.version` e invalido, por isso e
- *    opcional aqui.
- */
+/** Types for the official Khronos Dart binding, 2.0.0-dev.3.10. ESM exports version/supportedExtensions as functions; info can be absent when asset.version is invalid. */
 declare module "gltf-validator" {
-  /** 0 = Error, 1 = Warning, 2 = Information, 3 = Hint. */
+  /** 0 Error, 1 Warning, 2 Information, 3 Hint. */
   export type GltfIssueSeverity = 0 | 1 | 2 | 3;
 
   export type GltfIssue = {
     code: string;
     message: string;
     severity: GltfIssueSeverity;
-    /** JSON pointer dentro do glTF. Ausente em problemas do container GLB. */
+    /** glTF JSON pointer; container-level diagnostics may omit it. */
     pointer?: string;
-    /** Byte offset. Presente em problemas do container GLB. */
+    /** Container byte offset. */
     offset?: number;
   };
 
@@ -74,7 +63,7 @@ declare module "gltf-validator" {
       messages: GltfIssue[];
       truncated: boolean;
     };
-    /** Ausente quando o asset nao tem `asset.version` valido. */
+    /** Absent when the validator cannot parse a valid asset.version. */
     info?: GltfValidationInfo;
   };
 
@@ -83,10 +72,10 @@ declare module "gltf-validator" {
     format?: "glb" | "gltf";
     externalResourceFunction?: (uri: string) => Promise<Uint8Array>;
     writeTimestamp?: boolean;
-    /** 0 = ilimitado. */
+    /** Zero means unlimited. */
     maxIssues?: number;
     ignoredIssues?: string[];
-    /** Nao pode ser usado junto com `ignoredIssues`. */
+    /** Cannot be combined with ignoredIssues. */
     onlyIssues?: string[];
     severityOverrides?: Record<string, number>;
   };

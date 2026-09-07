@@ -10,9 +10,13 @@ import type { Violation } from "../src/contract.js";
  */
 
 describe("formatBytes", () => {
-  it("usa virgula como separador decimal — o repositorio e pt-BR", () => {
-    expect(formatBytes(1638)).toBe("1,6 KB");
-    expect(formatBytes(2_202_010)).toBe("2,1 MB");
+  it("defaults to English and supports explicit pt-BR formatting", () => {
+    expect(formatBytes(1638)).toBe("1.6 KB");
+    expect(formatBytes(1638, "pt-BR")).toBe("1,6 KB");
+  });
+  it("uses a comma when pt-BR is explicitly selected", () => {
+    expect(formatBytes(1638, "pt-BR")).toBe("1,6 KB");
+    expect(formatBytes(2_202_010, "pt-BR")).toBe("2,1 MB");
   });
 
   it("nao decora bytes crus abaixo de 1 KB", () => {
@@ -21,7 +25,7 @@ describe("formatBytes", () => {
   });
 
   it("vira KB exatamente em 1024, nao antes", () => {
-    expect(formatBytes(1024)).toBe("1,0 KB");
+    expect(formatBytes(1024)).toBe("1.0 KB");
   });
 });
 
@@ -61,7 +65,7 @@ describe("violationDetail", () => {
     };
     // `metric` aparece uma vez so: repetido nos dois lados nao e contraste.
     expect(violationDetail(violation)).toBe(
-      "metric materials · value 45  →  esperado max 20",
+      "metric materials · value 45  →  expected max 20",
     );
   });
 
@@ -73,7 +77,7 @@ describe("violationDetail", () => {
       want: { storage: ["glb", "buffer-view", "data-uri"] },
     };
     expect(violationDetail(violation)).toBe(
-      "storage external · uri cena.bin  →  esperado storage glb, buffer-view, data-uri",
+      "storage external · uri cena.bin  →  expected storage glb, buffer-view, data-uri",
     );
   });
 

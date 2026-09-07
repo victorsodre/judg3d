@@ -1,0 +1,27 @@
+name: Bug report
+description: Report unexpected behavior with a minimal reproduction.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, follow SECURITY.md. Do not attach secrets, proprietary assets or personal paths."
+  - type: input
+    id: environment
+    attributes:
+      label: Versions and environment
+      description: judg3d version, Node version and operating system.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact command or UI steps, profile, and a small redistributable asset or generator.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include exit code, diagnostic codes and relevant coverage. Redact personal information.
+    validations:
+      required: true

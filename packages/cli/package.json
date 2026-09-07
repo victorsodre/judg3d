@@ -1,21 +1,44 @@
 {
   "name": "judg3d",
-  "version": "0.0.0",
-  "description": "Juiz de aceitacao para assets 3D. CLI pre-alpha.",
+  "version": "0.1.0",
+  "description": "Local glTF/GLB acceptance checks: CLI, MCP and app with deterministic profiles.",
   "type": "module",
   "bin": {
-    "judg3d": "./dist/index.js"
+    "judg3d": "dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=11"
+    "node": ">=22.13.0"
   },
   "dependencies": {
+    "@judg3d/app": "workspace:*",
     "@judg3d/core": "workspace:*",
     "@judg3d/judge": "workspace:*",
+    "@judg3d/mcp": "workspace:*",
     "commander": "15.0.0"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorsodre/judg3d.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/victorsodre/judg3d#readme",
+  "bugs": {
+    "url": "https://github.com/victorsodre/judg3d/issues"
+  },
+  "keywords": [
+    "gltf",
+    "glb",
+    "3d",
+    "validation",
+    "asset-pipeline",
+    "mcp"
+  ]
 }

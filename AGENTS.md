@@ -73,8 +73,9 @@ assim que tem que ser.
   `JudgeReport`, não dentro do `Verdict`. Campo novo no contrato exige **mudar
   a spec primeiro**, com a evidência que o justifica — foi assim que
   `MeshMetrics.textures` entrou (ver `docs/calibracao-tumbler.md`).
-- Idioma: docs e mensagens em pt-BR, identificadores e códigos de violação em
-  inglês.
+- Idioma: inglês como padrão do produto, documentação pública, código e outputs
+  (CLI, API, MCP e JSON). A interface oferece pt-BR como opção persistida;
+  mudar o idioma não altera o relatório nem o veredito.
 - Commits convencionais, pequenos, um por etapa.
 
 ## Definição de pronto

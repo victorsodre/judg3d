@@ -1,5 +1,13 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  link,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -69,7 +77,7 @@ describe("judg3d judge — exit codes", () => {
     const { code, capture, out } = await run(fixture("valido.glb"));
     expect(code).toBe(0);
     expect(capture.err).toEqual([]);
-    expect(capture.out.join("\n")).toContain("APROVADO");
+    expect(capture.out.join("\n")).toContain("PASSED");
 
     const report = await readReport(out);
     expect(report.verdict.pass).toBe(true);
@@ -86,8 +94,8 @@ describe("judg3d judge — exit codes", () => {
     expect(code).toBe(1);
 
     const texto = capture.out.join("\n");
-    expect(texto).toContain("REPROVADO");
-    expect(texto).toContain("3 erros");
+    expect(texto).toContain("FAILED");
+    expect(texto).toContain("3 errors");
     expect(texto).toContain("UNRESOLVED_REFERENCE");
     expect(texto).toContain("/meshes/0/primitives/0/attributes/POSITION");
     expect(texto).toContain("Unresolved reference: 99.");
@@ -101,8 +109,8 @@ describe("judg3d judge — exit codes", () => {
     const out = join(workDir, "nao-deve-existir.json");
     const { code, capture } = await run(fixture("nao-existe.glb"), { out });
     expect(code).toBe(2);
-    expect(capture.err.join("\n")).toContain("Nao consegui ler o asset");
-    expect(capture.err.join("\n")).toContain("nao uma reprovacao do asset");
+    expect(capture.err.join("\n")).toContain("Could not read asset");
+    expect(capture.err.join("\n")).toContain("not an asset rejection");
     await expect(readFile(out, "utf8")).rejects.toThrow();
   });
 
@@ -111,7 +119,7 @@ describe("judg3d judge — exit codes", () => {
       profile: join(workDir, "sem-profile.json"),
     });
     expect(code).toBe(2);
-    expect(capture.err.join("\n")).toContain("Nao consegui ler o profile");
+    expect(capture.err.join("\n")).toContain("Could not read profile");
   });
 
   it("da exit 2 quando o profile pede camada nao implementada", async () => {
@@ -127,7 +135,7 @@ describe("judg3d judge — exit codes", () => {
     });
     expect(code).toBe(2);
     expect(capture.err.join("\n")).toContain("GEOMETRY");
-    expect(capture.err.join("\n")).toContain("falso PASS");
+    expect(capture.err.join("\n")).toContain("false PASS");
   });
 
   it("reprova arquivo que nao e glTF com exit 1, nao 2", async () => {
@@ -141,6 +149,35 @@ describe("judg3d judge — exit codes", () => {
 });
 
 describe("judg3d judge — relatorio", () => {
+  it.each(["asset", "profile", "symlink", "hardlink"])(
+    "preserva a entrada quando --out colide: %s",
+    async (mode) => {
+      const input = join(workDir, `protected-${mode}.glb`);
+      const profile = join(workDir, `protected-${mode}.json`);
+      const bytes = await readFile(fixture("valido.glb"));
+      const raw = await readFile(PROFILE);
+      await writeFile(input, bytes);
+      await writeFile(profile, raw);
+      let out = mode === "profile" ? profile : input;
+      if (mode === "symlink" || mode === "hardlink") {
+        out = join(workDir, `alias-${mode}`);
+        await (mode === "symlink" ? symlink : link)(input, out);
+      }
+      expect((await run(input, { profile, out })).code).toBe(2);
+      expect(await readFile(input)).toEqual(bytes);
+      expect(await readFile(profile)).toEqual(raw);
+    },
+  );
+
+  it("--out - produz somente JSON e não deixa temporários", async () => {
+    const before = await readdir(workDir);
+    const { code, capture } = await run(fixture("valido.glb"), { out: "-" });
+    expect(code).toBe(0);
+    expect(JSON.parse(capture.out.join("\n"))).toMatchObject({
+      verdict: { pass: true },
+    });
+    expect(await readdir(workDir)).toEqual(before);
+  });
   it("--json imprime o mesmo conteudo que grava", async () => {
     const { capture, out } = await run(fixture("quebrado.glb"), { json: true });
     const gravado = await readFile(out, "utf8");
@@ -194,6 +231,6 @@ describe("judg3d — binario compilado", () => {
         "judge",
         fixture("valido.glb"),
       ]),
-    ).rejects.toMatchObject({ code: 1 });
+    ).rejects.toMatchObject({ code: 2 });
   });
 });

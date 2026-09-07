@@ -103,3 +103,49 @@ Cena 1: Claude Code escreve cena R3F; judg3d reprova com 3 violações (escala 1
 ## v0 NÃO faz
 
 USD, QA de animação/rigging, física, repair automático (aponta, não conserta), plugin dentro de engine, marketplace de perfis, VLM como gate, contas/moderação sofisticada no registry.
+# Semântica do primeiro release utilizável (0.1.0)
+
+O recorte entregável é SCHEMA + PROFILE, CLI, MCP por stdio e app local.
+GEOMETRY, VISUAL, SEMANTIC e herança de profiles continuam indisponíveis.
+Pedir uma capacidade indisponível, desligar todas as camadas ou habilitar
+PROFILE sem SCHEMA é erro de configuração (exit 2), sem veredito.
+
+`failOn` usa a severidade original da Khronos após `severityOverrides`.
+`report` controla apresentação: nunca altera aprovação nem oculta a severidade
+que reprova. Information/Hint mantêm a severidade original em `got.severity`;
+o contrato os apresenta como `warn`, mas eles não reprovam com `failOn: warn`.
+O aviso sintético `ISSUES_TRUNCATED` também não reprova por si só.
+`maxPerCode` resume o relatório após validar; `maxIssues` pode interromper a
+validação Khronos. Nesse caso o resultado é incompleto e retorna infra (2).
+Falhas internas do validator são infra; formato não reconhecido é SCHEMA FAIL.
+
+`nodePath: ""` identifica o documento inteiro (JSON Pointer raiz), enquanto
+`offset:N` identifica um byte no container. Violações de orçamento agregadas
+apontam para a raiz. A cobertura declara explicitamente camadas não executadas;
+PASS neste release não certifica aparência, geometria ou semântica.
+
+Quando uma imagem não pode ser medida e maxTextureSize está definido, PROFILE
+reprova com TEXTURE_METRICS_UNAVAILABLE no pointer da imagem. A métrica agregada
+textures fica ausente em vez de usar zero ou reportar um máximo parcial.
+
+## Language policy
+
+English is the default product language, including CLI help, API/MCP errors,
+diagnostic messages and JSON reports. The UI offers `en` and `pt-BR`, defaults
+to English regardless of browser locale, and remembers an explicit selection
+locally. Switching languages updates presentation without rerunning validation
+or modifying the report. Technical diagnostics retain their original English.
+Public documentation starts in English; historical project notes may remain
+in Portuguese. Report detail keys use `usage` and `omitted` instead of the
+Portuguese names from the unpublished candidate; violation codes are unchanged.
+
+## Report boundary validation
+
+A received report must declare at least one executed layer. Engine layers and
+executed coverage agree in order; executed/skipped layers are unique, disjoint
+and cover the five contract layers. A PASS cannot contain error-severity
+violations, and a FAIL must contain a diagnostic. Violations refer only to
+executed layers. Counters use nonnegative safe integers. Invalid reports are
+rejected before presentation; these checks do not recompute asset acceptance.
+Human-readable nested details use bounded traversal; the original JSON remains
+complete. These are presentation/transport safeguards, not profile tolerances.

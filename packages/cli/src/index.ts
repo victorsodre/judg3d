@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Command, CommanderError } from "commander";
 
 import { EXIT_INFRA } from "@judg3d/core";
 import { engineVersions } from "@judg3d/judge";
@@ -7,29 +7,39 @@ import { engineVersions } from "@judg3d/judge";
 import { runJudgeCommand } from "./commands/judge.js";
 import { CLI_VERSION } from "./version.js";
 
-const program = new Command();
+const program = new Command().exitOverride();
 
 program
   .name("judg3d")
-  .description("Juiz de aceitacao para assets 3D. Pre-alpha: so a camada L1 SCHEMA.")
+  .description(
+    "Acceptance checks for 3D assets. SCHEMA and PROFILE, with explicit coverage.",
+  )
   .version(CLI_VERSION, "-v, --version");
 
 program
   .command("judge")
-  .description("Julga um arquivo glTF/GLB contra um profile e grava o relatorio.")
-  .argument("<asset>", "caminho do .glb ou .gltf")
-  .requiredOption("-p, --profile <arquivo>", "profile JSON com as regras")
-  .option("-o, --out <arquivo>", "onde gravar o relatorio", "judge-report.json")
-  .option("--json", "imprime o relatorio JSON em vez do resumo humano", false)
-  .option("--timestamp", "inclui generatedAt (quebra o determinismo do arquivo)", false)
+  .description("Judge a glTF/GLB file against a profile and write the report.")
+  .argument("<asset>", "path to the .glb or .gltf file")
+  .requiredOption("-p, --profile <file>", "JSON profile containing the rules")
+  .option(
+    "-o, --out <file>",
+    "report destination (- for stdout only)",
+    "judge-report.json",
+  )
+  .option("--json", "print the JSON report instead of the human summary", false)
+  .option(
+    "--timestamp",
+    "include generatedAt (makes the report non-deterministic)",
+    false,
+  )
   .addHelpText(
     "after",
     [
       "",
       "Exit codes:",
-      "  0  asset aprovado",
-      "  1  asset reprovado",
-      "  2  falha de infraestrutura — nenhum veredito foi produzido",
+      "  0  asset passed",
+      "  1  asset failed",
+      "  2  infrastructure failure — no verdict was produced",
     ].join("\n"),
   )
   .action(
@@ -53,22 +63,73 @@ program
 
 program
   .command("engine")
-  .description("Mostra as versoes do runtime que assinam o veredito.")
+  .description("Show the runtime versions used to produce the verdict.")
   .action(() => {
     const engine = engineVersions();
     process.stdout.write(`judg3d           ${CLI_VERSION}\n`);
     process.stdout.write(`gltf-validator   ${engine.gltfValidator}\n`);
     process.stdout.write(`node             ${engine.node}\n`);
     process.stdout.write(
-      `extensoes glTF   ${engine.gltfExtensions.length} suportadas\n`,
+      `glTF extensions  ${engine.gltfExtensions.length} supported\n`,
     );
+  });
+
+program
+  .command("app")
+  .description("Start the local app and display its browser address.")
+  .option("--port <number>", "local port (0 chooses an available port)", "8787")
+  .option("--profiles <directory>", "directory containing JSON profiles")
+  .action(async (options: { port: string; profiles?: string }) => {
+    const { startApp } = await import("@judg3d/app");
+    const server = await startApp({
+      port: Number(options.port),
+      ...(options.profiles === undefined
+        ? {}
+        : { profilesDir: options.profiles }),
+    });
+    const shutdown = (): void => {
+      server.close();
+      if ("closeAllConnections" in server) server.closeAllConnections();
+    };
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
+  });
+
+program
+  .command("mcp")
+  .description("Start MCP over stdio; stdout is reserved for the protocol.")
+  .option(
+    "--root <directory>",
+    "authorized workspace for assets and profiles",
+    process.cwd(),
+  )
+  .action(async (options: { root: string }) => {
+    const { startMcp } = await import("@judg3d/mcp");
+    const server = await startMcp({ root: options.root, version: CLI_VERSION });
+    const shutdown = (): void => {
+      void server.close();
+    };
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
+  });
+
+program
+  .command("profiles")
+  .description("Show the directory containing bundled profiles.")
+  .action(async () => {
+    const { resolveProfilesDir } = await import("@judg3d/app");
+    process.stdout.write(`${resolveProfilesDir()}\n`);
   });
 
 try {
   await program.parseAsync(process.argv);
 } catch (error) {
-  process.stderr.write(
-    `judg3d: falha inesperada — ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
-  );
-  process.exitCode = EXIT_INFRA;
+  if (error instanceof CommanderError) {
+    process.exitCode = error.exitCode === 0 ? 0 : EXIT_INFRA;
+  } else {
+    process.stderr.write(
+      `judg3d: ${error instanceof Error ? error.message : "unexpected failure"}\n`,
+    );
+    process.exitCode = EXIT_INFRA;
+  }
 }

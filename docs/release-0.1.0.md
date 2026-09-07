@@ -1,0 +1,67 @@
+# Release 0.1.0 — preparation
+
+The candidate provides a local CLI, MCP server and browser app over the same
+SCHEMA/PROFILE engine. All five packages use MIT and include the license and
+third-party notices. Public source and npm publication remain separate owner
+approval steps. The old `judg3d@0.0.1` package only reserves the npm name.
+
+## Resulting behavior
+
+- Profiles with no checks, unimplemented inheritance or PROFILE without SCHEMA
+  return infrastructure failure. Requested unavailable layers never silently pass.
+- Original Khronos severity determines rejection. Report filtering and per-code
+  summarization preserve the verdict. Interrupted validation returns exit 2.
+- Internal validator errors and unmeasurable budgeted textures are handled
+  explicitly. Optional measurements remain absent when unavailable.
+- CLI reports are atomic, protect input files and support stdout-only JSON.
+  Human summaries are bounded and terminal controls are escaped.
+- CLI, API and MCP share worker isolation, timeout and cancellation. MCP restricts
+  local paths to its chosen root and uses the official SDK over stdio.
+- HTTP validates local origins/hostnames and restricts static files. The app
+  supports reconnect/cancel, resets results when inputs change, shows coverage
+  and filters/paginates violations.
+- English is the default. pt-BR is a persistent UI option; report JSON and
+  technical diagnostics stay English. Language changes do not rerun analysis.
+- Received reports reject inconsistent coverage and contradictory verdicts.
+  Nested detail formatting is bounded without changing raw report data.
+- MIT licensing, contribution/security/governance documents, issue/PR templates,
+  dependency updates and reproducible demonstration support public maintenance.
+
+## Reproduce verification
+
+```sh
+pnpm typecheck && pnpm lint && pnpm test
+pnpm docs:check
+pnpm demo
+pnpm release:pack
+pnpm release:check
+```
+
+Tests cover valid/broken assets, configuration errors, verdict invariants,
+report integrity, input protection, cancellation, large diagnostics, HTTP
+boundaries and real MCP transport. The package check installs all tarballs
+outside the monorepo, verifies hashes/licenses and exercises CLI exits,
+determinism, MCP, HTTP UI and asset upload. Temporary installations are removed.
+
+`artifacts/demo/manifest.json` records reproducible demo inputs and report hashes.
+`artifacts/release/manifest.json` records package hashes; verification files must
+match them. Screenshots in `output/playwright/` document real browser checks.
+Fixtures retain their original bytes and attribution.
+
+CI is configured for Linux with Node 22.13/24/26 and macOS with Node 26. A separate
+job scans full Git history using a pinned, checksum-verified Gitleaks binary.
+These workflows become verified remote evidence only after a push and passing
+runs. Local checks must not be described as remote CI success.
+
+## Limits and next steps
+
+SCHEMA/PROFILE do not certify appearance, geometry, UVs or semantics. Baselines,
+rendering, inheritance, remote assets and hosted accounts are unavailable.
+`web-commerce` enables SCHEMA only; `agent-loop` contains example pipeline limits.
+Worker memory limits are not a total RSS cap or an OS security sandbox.
+
+Follow the [release checklist](maintainers/release.md) for historical privacy
+review, public source, private vulnerability reporting, exact tarball publication
+and rollback. See [CHANGELOG.md](../CHANGELOG.md) for compatibility notes.
+The [program preparation record](maintainers/openai-application.md) keeps
+technical evidence separate from unproven adoption claims.

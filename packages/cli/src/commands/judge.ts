@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { assertReportDestination, writeReport } from "../report-file.js";
 
 import {
   EXIT_FAIL,
@@ -9,8 +9,9 @@ import {
   serializeReport,
   type ExitCode,
 } from "@judg3d/core";
-import { judge, readAsset } from "@judg3d/judge";
+import { judgeIsolated, readAsset } from "@judg3d/judge";
 
+import { terminalText } from "../format.js";
 import { renderReport } from "../render.js";
 
 export type JudgeCommandOptions = {
@@ -26,17 +27,7 @@ export type JudgeCommandContext = {
   stderr: (line: string) => void;
 };
 
-/**
- * `judg3d judge <asset> --profile <p.json>`
- *
- * Exit codes, invariante 3 da spec:
- *   0  o asset passou
- *   1  o asset foi reprovado
- *   2  falha de infra — o juiz nao chegou a um veredito
- *
- * Nao existe caminho que devolva 0 sem um Verdict computado: qualquer excecao
- * inesperada cai no catch e vira 2.
- */
+/** Exit 0 requires a computed PASS; asset rejection is 1 and infrastructure failure is 2 without a new report. */
 export async function runJudgeCommand(
   assetPath: string,
   options: JudgeCommandOptions,
@@ -46,50 +37,47 @@ export async function runJudgeCommand(
     const loaded = await loadProfile(options.profile);
     const asset = await readAsset(assetPath);
 
-    const { verdict, report } = await judge(asset, loaded, {
-      judg3dVersion: context.judg3dVersion,
-      ...(options.timestamp ? { timestamp: true } : {}),
+    await assertReportDestination(options.out, [assetPath, options.profile]);
+    const report = await judgeIsolated({
+      asset,
+      profile: loaded,
+      options: {
+        judg3dVersion: context.judg3dVersion,
+        ...(options.timestamp ? { timestamp: true } : {}),
+      },
     });
 
     const serialized = serializeReport(report);
-    await writeReport(options.out, serialized);
+    await writeReport(options.out, serialized, [assetPath, options.profile]);
 
-    if (options.json) {
+    if (options.json || options.out === "-") {
       context.stdout(serialized.trimEnd());
     } else {
       context.stdout(renderReport(report, options.out));
     }
 
-    return verdict.pass ? EXIT_PASS : EXIT_FAIL;
+    return report.verdict.pass ? EXIT_PASS : EXIT_FAIL;
   } catch (error) {
     reportInfraFailure(error, context);
     return EXIT_INFRA;
   }
 }
 
-async function writeReport(path: string, contents: string): Promise<void> {
-  try {
-    await writeFile(path, contents, "utf8");
-  } catch (cause) {
-    throw new InfraError(
-      `Nao consegui gravar o relatorio em ${path}`,
-      cause instanceof Error ? cause.message : String(cause),
-    );
-  }
-}
-
-function reportInfraFailure(error: unknown, context: JudgeCommandContext): void {
+function reportInfraFailure(
+  error: unknown,
+  context: JudgeCommandContext,
+): void {
   if (error instanceof InfraError) {
-    context.stderr(`judg3d: ${error.message}`);
+    context.stderr(`judg3d: ${terminalText(error.message)}`);
     if (error.detail !== undefined) {
-      context.stderr(error.detail);
+      context.stderr(terminalText(error.detail));
     }
   } else {
     context.stderr(
-      `judg3d: falha inesperada — ${error instanceof Error ? error.stack ?? error.message : String(error)}`,
+      `judg3d: unexpected failure — ${terminalText(error instanceof Error ? error.message : String(error))}`,
     );
   }
   context.stderr(
-    "Isto e uma falha de infraestrutura (exit 2), nao uma reprovacao do asset.",
+    "This is an infrastructure failure (exit 2), not an asset rejection.",
   );
 }

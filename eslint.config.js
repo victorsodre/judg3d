@@ -4,11 +4,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: [
-      "**/dist/**",
-      "**/client-dist/**",
-      "**/node_modules/**",
-    ],
+    ignores: ["**/dist/**", "**/client-dist/**", "**/node_modules/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -22,6 +18,7 @@ export default tseslint.config(
           "./packages/core/tsconfig.json",
           "./packages/judge/tsconfig.json",
           "./packages/cli/tsconfig.json",
+          "./packages/mcp/tsconfig.json",
           "./packages/app/tsconfig.json",
           "./packages/app/tsconfig.ui.json",
         ],

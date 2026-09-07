@@ -1,7 +1,7 @@
 {
   "name": "@judg3d/judge",
-  "version": "0.0.0",
-  "description": "Motor de camadas do judg3d. v0: L1 SCHEMA via glTF Validator da Khronos.",
+  "version": "0.1.0",
+  "description": "SCHEMA and PROFILE validation for glTF/GLB using the Khronos validator.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,13 +11,34 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=11"
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "@judg3d/core": "workspace:*",
     "gltf-validator": "2.0.0-dev.3.10"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorsodre/judg3d.git",
+    "directory": "packages/judge"
+  },
+  "homepage": "https://github.com/victorsodre/judg3d#readme",
+  "bugs": {
+    "url": "https://github.com/victorsodre/judg3d/issues"
+  },
+  "keywords": [
+    "gltf",
+    "glb",
+    "3d",
+    "validation",
+    "asset-pipeline",
+    "mcp"
+  ]
 }

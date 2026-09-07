@@ -7,12 +7,17 @@ import {
   type Violation,
 } from "@judg3d/core";
 
-import { bold, dim, green, plural, red, yellow } from "./format.js";
+import {
+  bold,
+  dim,
+  green,
+  plural,
+  red,
+  terminalText,
+  yellow,
+} from "./format.js";
 
-/**
- * Relatorio legivel no terminal. O `judge-report.json` e o que o agente le;
- * isto aqui e o que a pessoa le. Os dois carregam a mesma informacao.
- */
+/** Bound human-readable output; the JSON report is canonical and retains all reported occurrences. */
 export function renderReport(report: JudgeReport, outPath: string): string {
   const { verdict } = report;
   const counts = countBySeverity(verdict.violations);
@@ -20,63 +25,76 @@ export function renderReport(report: JudgeReport, outPath: string): string {
 
   lines.push(
     dim(
-      `judg3d ${report.judg3dVersion} · perfil ${report.profile.id}@${report.profile.version} · gltf-validator ${report.engine.gltfValidator}`,
+      terminalText(
+        `judg3d ${report.judg3dVersion} · profile ${report.profile.id}@${report.profile.version} · gltf-validator ${report.engine.gltfValidator}`,
+      ),
     ),
   );
   lines.push(
     dim(
-      `asset  ${report.asset.uri}  ${formatBytes(report.asset.bytes)}  sha256 ${shortHash(report.asset.sha256)}`,
+      terminalText(
+        `asset  ${report.asset.uri}  ${formatBytes(report.asset.bytes)}  sha256 ${shortHash(report.asset.sha256)}`,
+      ),
     ),
   );
   lines.push("");
 
-  const resumo = `${plural(counts.error, "erro", "erros")}, ${plural(counts.warn, "aviso", "avisos")}`;
+  const summary = `${plural(counts.error, "error", "errors")}, ${plural(counts.warn, "warning", "warnings")}`;
   lines.push(
     verdict.pass
-      ? `${green(bold("APROVADO"))} — ${resumo}`
-      : `${red(bold("REPROVADO"))} — ${resumo}`,
+      ? `${green(bold("PASSED"))} — ${summary}`
+      : `${red(bold("FAILED"))} — ${summary}`,
   );
 
   if (verdict.violations.length > 0) {
-    // Alinha a coluna do pointer pelo codigo mais longo desta rodada.
-    const codeWidth = Math.max(
-      ...verdict.violations.map((violation) => violation.code.length),
+    // Align the diagnostic code column.
+    const visible = verdict.violations.slice(0, 200);
+    const codeWidth = visible.reduce(
+      (max, violation) => Math.max(max, terminalText(violation.code).length),
+      0,
     );
     lines.push("");
-    for (const violation of verdict.violations) {
+    for (const violation of visible) {
       lines.push(...renderViolation(violation, codeWidth));
+    }
+    if (visible.length < verdict.violations.length) {
+      lines.push(
+        `  ${verdict.violations.length - visible.length} additional occurrences in the JSON report.`,
+      );
     }
   }
 
   lines.push("");
-  lines.push(dim(`métricas: ${renderMetrics(report)}`));
-  lines.push(dim(`camadas: ${report.engine.layers.join(", ")}`));
-  const fora = report.coverage.skipped;
-  if (fora.length > 0) {
-    // Um APROVADO sem esta linha convida a leitura errada, e ela ja aconteceu:
-    // um modelo aprovado aqui foi reprovado por um critic humano na mesma hora,
-    // porque as camadas que julgam aparencia estavam desligadas. O relatorio
-    // dizia a verdade e enganava por omissao.
+  lines.push(dim(`metrics: ${renderMetrics(report)}`));
+  lines.push(dim(`layers: ${report.engine.layers.join(", ")}`));
+  const skipped = report.coverage.skipped;
+  if (skipped.length > 0) {
+    // Show coverage so acceptance is not interpreted as certification of unimplemented visual checks.
+
     lines.push(
-      dim(`NAO coberto: ${fora.join(", ")} — este veredicto e sobre conformidade, nao aparencia`),
+      dim(
+        `Not covered: ${skipped.join(", ")} — this verdict covers conformance, not appearance`,
+      ),
     );
   }
-  lines.push(dim(`relatório: ${outPath}`));
+  lines.push(dim(`report: ${terminalText(outPath)}`));
 
   return lines.join("\n");
 }
 
 function renderViolation(violation: Violation, codeWidth: number): string[] {
-  const label = violation.severity === "error" ? red("ERRO ") : yellow("AVISO");
-  const code = bold(violation.code.padEnd(codeWidth));
+  const label = violation.severity === "error" ? red("ERROR") : yellow("WARN ");
+  const code = bold(terminalText(violation.code).padEnd(codeWidth));
   const head = `  ${label}  ${violation.kind}  ${code}`;
   const where =
-    violation.nodePath === undefined ? "" : `  ${dim(violation.nodePath)}`;
+    violation.nodePath === undefined
+      ? ""
+      : `  ${dim(terminalText(violation.nodePath || "Entire document"))}`;
   const lines = [`${head}${where}`];
 
   const detail = violationDetail(violation);
   if (detail !== undefined) {
-    lines.push(`         ${dim(detail)}`);
+    lines.push(`         ${dim(terminalText(detail))}`);
   }
   return lines;
 }
@@ -86,12 +104,12 @@ function renderMetrics(report: JudgeReport): string {
   const parts = [
     `${metrics.triangles} tris`,
     `${metrics.vertices} verts`,
-    plural(metrics.materials, "material", "materiais"),
+    plural(metrics.materials, "material", "materials"),
     plural(metrics.drawCalls, "draw call", "draw calls"),
   ];
   if (metrics.textures !== undefined) {
     const { count, maxSize } = metrics.textures;
-    parts.push(`${plural(count, "textura", "texturas")} até ${maxSize}px`);
+    parts.push(`${plural(count, "texture", "textures")} up to ${maxSize}px`);
   }
   if (metrics.dimensions !== undefined) {
     const { x, y, z } = metrics.dimensions;

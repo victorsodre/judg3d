@@ -1,8 +1,4 @@
-/**
- * Invariante 3 da spec: falha de infra nunca vira reprovacao, e reprovacao
- * nunca vira falha de infra. Sao dois exit codes distintos e nenhum caminho
- * imprime "passou" sem um Verdict computado.
- */
+/** Infrastructure failures are distinct from asset rejection: exit 2 rather than exit 1. */
 export class InfraError extends Error {
   override readonly name = "InfraError";
   readonly detail: string | undefined;

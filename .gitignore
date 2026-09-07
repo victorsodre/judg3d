@@ -4,3 +4,12 @@ client-dist/
 *.tsbuildinfo
 judge-report.json
 .DS_Store
+
+packages/app/bundled-profiles/
+artifacts/
+output/
+.playwright-cli/
+
+# Generated package license copies; root files are canonical.
+packages/*/LICENSE
+packages/*/THIRD_PARTY_NOTICES.md
