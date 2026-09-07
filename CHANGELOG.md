@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-09-07
 
-First usable release candidate for local glTF/GLB acceptance checks.
+First usable release for local glTF/GLB acceptance checks, published on npm.
 
 - SCHEMA via Khronos and PROFILE budgets/self-containment, with explicit coverage.
 - CLI, isolated worker execution, local HTTP/UI and MCP over stdio.
@@ -18,11 +18,11 @@ First usable release candidate for local glTF/GLB acceptance checks.
 - Clean-install verification for all five packages; CI and dependency updates.
 
 Geometry, rendering, baselines, inheritance and semantic judgments are not
-implemented. The candidate has not yet been published to npm.
+implemented.
 
 ### Compatibility notes
 
-Earlier unpublished snapshots used `got.uso` and `got.omitidas`; the candidate
+Earlier unpublished snapshots used `got.uso` and `got.omitidas`; this release
 uses `got.usage` and `got.omitted`. Diagnostic codes and profile acceptance rules
 are preserved. `aplicarTetoPorCodigo` remains a compatibility alias for
 `capIssuesPerCode`. UI API failures now include stable error codes for localization.

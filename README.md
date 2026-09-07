@@ -7,14 +7,24 @@ produce a verdict with actionable violations, metrics, hashes and explicit
 coverage. Format validation uses the official
 [Khronos glTF Validator](https://github.com/KhronosGroup/glTF-Validator).
 
-**0.1.0 release candidate.** This repository contains the working CLI, MCP server
-and local app. The historical `judg3d@0.0.1` npm package only reserves the name.
-This implementation is MIT-licensed. Install the candidate from source;
-version 0.1.0 has not been published to npm.
+**0.1.0 is available on [npm](https://www.npmjs.com/package/judg3d).**
+The MIT-licensed release includes the CLI, MCP server and local app.
+The historical `judg3d@0.0.1` package was a name reservation only.
 
 ## Get started
 
-Requires Node **22.13.0 or later** and pnpm **11.22.0**.
+Requires Node **22.13.0 or later**. No OpenAI account or API key is needed.
+
+```sh
+npx --yes judg3d@0.1.0 app
+```
+
+Open the local address printed in the terminal. Your asset is processed on your
+computer. The [tester guide](docs/launch/tester-guide.md) walks through a first trial.
+
+### From source
+
+Use pnpm **11.22.0** to build the repository and run its examples:
 
 ```sh
 git clone https://github.com/victorsodre/judg3d.git
@@ -114,19 +124,14 @@ through `extends`, or enabling PROFILE without SCHEMA also returns exit 2.
 ## MCP for agents
 
 The MCP server exposes `judge_asset` for reading local files. Configure the
-absolute path to the built CLI and restrict the workspace to your project:
+published CLI and restrict the workspace to your project:
 
 ```json
 {
   "mcpServers": {
     "judg3d": {
-      "command": "node",
-      "args": [
-        "/path/to/judg3d/packages/cli/dist/index.js",
-        "mcp",
-        "--root",
-        "/path/to/project"
-      ]
+      "command": "npx",
+      "args": ["--yes", "judg3d@0.1.0", "mcp", "--root", "/path/to/project"]
     }
   }
 }

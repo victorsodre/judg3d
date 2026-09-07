@@ -23,8 +23,9 @@ The initial preparation snapshot was private with zero stars and zero forks.
 On 2026-09-07, `victorsodre/judg3d` became public under MIT after historical privacy
 cleanup. The source is public; independent adoption is not yet established.
 Contributions by the primary maintainer and an AI tool account do not establish
-a community of independent maintainers. The functional 0.1.0 package set remains
-an unpublished npm candidate; the 0.0.1 npm artifact is a placeholder.
+a community of independent maintainers. The functional 0.1.0 package set was
+published to npm on 2026-09-07 and verified through a clean registry installation;
+the 0.0.1 npm artifact is a placeholder.
 Its download count would not measure adoption of the working validator.
 
 The current evidence establishes a working deterministic acceptance gate,
@@ -42,6 +43,13 @@ remove practical onboarding barriers; they do not create usage by themselves.
 - [Passing history secret scan](https://github.com/victorsodre/judg3d/actions/runs/34081809768).
 - Public README, MIT license and demo were retrieved without authentication.
   Private vulnerability reporting and secret push protection are enabled.
+- [Published npm CLI and app entry point](https://www.npmjs.com/package/judg3d).
+- [Launch CI](https://github.com/victorsodre/judg3d/actions/runs/34085605486) and
+  [secret scan](https://github.com/victorsodre/judg3d/actions/runs/34085605430)
+  passed before the English-only launch was merged.
+- The [repair-loop example](../../examples/repair-loop/README.md) verifies an
+  authoring correction against an unchanged profile. The [trial kit](../launch/README.md)
+  is ready; independent feedback has not yet been collected.
 
 These are dated technical results. Recheck the latest revision and actual usage
 before submitting; repository publication does not itself demonstrate adoption.

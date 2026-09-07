@@ -1,9 +1,14 @@
-# Release 0.1.0 — preparation
+# Release 0.1.0
 
-The candidate provides a local CLI, MCP server and browser app over the same
+Published on npm on 2026-09-07. This release provides a local CLI, MCP server and browser app over the same
 SCHEMA/PROFILE engine. All five packages use MIT and include the license and
-third-party notices. Source is public on GitHub; npm publication remains a
-separate owner approval step. The old `judg3d@0.0.1` package only reserves the npm name.
+third-party notices. Source is public on GitHub. The old `judg3d@0.0.1` package only reserved the npm name.
+
+Start with `npx --yes judg3d@0.1.0 app`. The published package set is
+`judg3d`, `@judg3d/core`, `@judg3d/judge`, `@judg3d/app` and `@judg3d/mcp`,
+all at 0.1.0. A clean registry installation matched the reviewed tarballs and
+passed CLI exit-code, determinism, MCP and HTTP/UI checks on Node 26.7.0.
+The same tarballs also passed installation checks on Node 22.13.0.
 
 ## Resulting behavior
 
@@ -35,6 +40,7 @@ pnpm docs:check
 pnpm demo
 pnpm release:pack
 pnpm release:check
+node tools/check-release.mjs --registry
 ```
 
 Tests cover valid/broken assets, configuration errors, verdict invariants,
@@ -54,6 +60,11 @@ The initial public candidate passed [all four CI environments](https://github.co
 and the [history secret scan](https://github.com/victorsodre/judg3d/actions/runs/34081809768).
 Those runs identify their exact source revision. Check the latest main-branch
 run before a subsequent release; earlier results do not verify later changes.
+
+The English-only launch and repair example passed the
+[four-environment CI matrix](https://github.com/victorsodre/judg3d/actions/runs/34085605486)
+and [history secret scan](https://github.com/victorsodre/judg3d/actions/runs/34085605430)
+before [PR #6](https://github.com/victorsodre/judg3d/pull/6) was merged.
 
 ## Limits and next steps
 
