@@ -6,12 +6,17 @@
   "role": "Primary maintainer",
   "whyRepositoryQualifies": "judg3d is an early-stage MIT-licensed acceptance gate for glTF/GLB asset pipelines. It combines Khronos validation with versioned budgets, explicit coverage and deterministic reports, usable through CLI, local UI and MCP. Its ecosystem contribution is giving humans and coding agents a reproducible external check of 3D outputs. I can demonstrate real pass/fail/infra cases; I am not claiming broad adoption yet.",
   "apiCreditUse": "I would use credits for maintainer-approved regression-test proposals, reproducer reduction, issue triage and release-note drafts. I would evaluate suggestions against deterministic fixtures and human review, with per-run and monthly spending limits. No automatic merges or release publication, and no private user assets sent without permission. judg3d itself remains usable without an API key or paid model.",
-  "additionalContext": "I am the primary maintainer. The current implementation supports SCHEMA and PROFILE, not visual or semantic judging. A historical 78-round authoring project contains seven recorded judge runs; I do not present it as 78 validations or independent adoption. The repository includes a reproducible demo, security boundaries, regression tests and clean-install package checks. I would welcome feedback on the project's ecosystem fit.",
+  "additionalContext": "I am the primary maintainer. Version 0.1.0 is published on npm with CLI, local UI and MCP entry points. The repository has 121 regression tests, multi-platform CI, clean registry-install checks and a reproducible asset correction demo using an unchanged profile. Coverage is SCHEMA and PROFILE; visual and semantic judging are not implemented. A first-user trial kit is ready, but independent adoption is not yet established.",
   "beforeSubmitting": [
-    "Publish the reviewed MIT-licensed source and verify anonymous access to the repository and maintainer profile.",
-    "Run CI on the published source and link the exact passing revision.",
     "Recheck the official form, program terms and current project metrics.",
+    "Update usage claims only with independently observed outcomes and consented public evidence.",
     "Enter personal account details and OpenAI organization ID directly in the official form; do not commit them here.",
     "Review each answer and explicitly approve submission."
+  ],
+  "publicEvidence": [
+    "https://www.npmjs.com/package/judg3d",
+    "https://github.com/victorsodre/judg3d/actions/runs/34085605486",
+    "https://github.com/victorsodre/judg3d/tree/main/examples/repair-loop",
+    "https://github.com/victorsodre/judg3d/tree/main/docs/launch"
   ]
 }

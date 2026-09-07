@@ -6,7 +6,16 @@ You do not need an OpenAI account or API key.
 
 ## Start locally
 
-The source installation works independently of registry publication:
+Start the published app:
+
+```sh
+npx --yes judg3d@0.1.0 app
+```
+
+Open the address printed by the app. Your asset is processed locally; it is not
+uploaded to a hosted service. Stop the server with `Ctrl+C`.
+
+To run the reproducible examples or work on the source, use pnpm 11.22.0:
 
 ```sh
 git clone https://github.com/victorsodre/judg3d.git
@@ -15,9 +24,6 @@ pnpm install --frozen-lockfile
 pnpm build
 pnpm judg3d app
 ```
-
-Use pnpm 11.22.0. Open the address printed by the app. Your asset is processed
-locally; it is not uploaded to a hosted service. Stop the server with `Ctrl+C`.
 
 ## Try one real task
 
