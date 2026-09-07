@@ -1,5 +1,7 @@
 # judg3d
 
+[![CI](https://github.com/victorsodre/judg3d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/victorsodre/judg3d/actions/workflows/ci.yml)
+
 Local acceptance checks for glTF/GLB assets. An asset and a versioned profile
 produce a verdict with actionable violations, metrics, hashes and explicit
 coverage. Format validation uses the official
@@ -15,6 +17,8 @@ version 0.1.0 has not been published to npm.
 Requires Node **22.13.0 or later** and pnpm **11.22.0**.
 
 ```sh
+git clone https://github.com/victorsodre/judg3d.git
+cd judg3d
 pnpm install --frozen-lockfile
 pnpm build
 pnpm judg3d judge fixtures/valido.glb --profile profiles/web-commerce.json

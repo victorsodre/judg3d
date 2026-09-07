@@ -19,10 +19,12 @@ form, not the repository. Read the current terms before submitting.
 
 ## Observed position
 
-At the preparation snapshot, `victorsodre/judg3d` is private with zero stars and
-zero forks. GitHub lists contributions from the primary maintainer and an AI
-tool account; that is not a community of independent maintainers. The functional
-0.1.0 package set is a local candidate; the 0.0.1 npm artifact is a placeholder.
+The initial preparation snapshot was private with zero stars and zero forks.
+On 2026-09-07, `victorsodre/judg3d` became public under MIT after historical privacy
+cleanup. The source is public; independent adoption is not yet established.
+Contributions by the primary maintainer and an AI tool account do not establish
+a community of independent maintainers. The functional 0.1.0 package set remains
+an unpublished npm candidate; the 0.0.1 npm artifact is a placeholder.
 Its download count would not measure adoption of the working validator.
 
 The current evidence establishes a working deterministic acceptance gate,
@@ -31,9 +33,22 @@ regression tests, local UI/MCP integration and reproducible package installation
 establish broad ecosystem importance. MIT and contributor/security policies
 remove practical onboarding barriers; they do not create usage by themselves.
 
+## Public technical evidence
+
+- [Initial public candidate](https://github.com/victorsodre/judg3d/commit/26de491f56e52a0b738b5c1a0db5f9a79bd3c86c).
+- [Passing CI](https://github.com/victorsodre/judg3d/actions/runs/34081809801): 121 tests,
+  type checking, lint, documentation checks, clean package installation and demo
+  on Linux with Node 22.13/24/26 and macOS with Node 26.
+- [Passing history secret scan](https://github.com/victorsodre/judg3d/actions/runs/34081809768).
+- Public README, MIT license and demo were retrieved without authentication.
+  Private vulnerability reporting and secret push protection are enabled.
+
+These are dated technical results. Recheck the latest revision and actual usage
+before submitting; repository publication does not itself demonstrate adoption.
+
 ## Stronger evidence to collect
 
-- A public passing CI run tied to the release's exact source revision.
+- Continued passing CI tied to each release's exact source revision.
 - An independent developer reproducing the demo or integrating a real pipeline.
 - Public bug reports, reviewed contributions and fixes that show maintenance.
 - A consented case study recording unique assets, decisions acted on and

@@ -2,11 +2,10 @@
 
 ## Report a vulnerability
 
-Use [GitHub private vulnerability reporting](https://github.com/victorsodre/judg3d/security/advisories/new)
-when available. If that channel has not yet been enabled, open an issue asking
-for a private reporting channel **without including exploit details, assets,
-credentials or personal information**. Private reporting must be enabled before
-announcing the public release; see the [release checklist](docs/maintainers/release.md).
+Use [GitHub private vulnerability reporting](https://github.com/victorsodre/judg3d/security/advisories/new).
+The channel is enabled for this repository. Keep exploit details, assets,
+credentials and personal information out of public issues. For release controls,
+see the [release checklist](docs/maintainers/release.md).
 
 Include the affected version, runtime, minimal reproduction, expected boundary
 and impact. Use a synthetic or redistributable asset. Do not test other users'

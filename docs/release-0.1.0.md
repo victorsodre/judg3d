@@ -2,8 +2,8 @@
 
 The candidate provides a local CLI, MCP server and browser app over the same
 SCHEMA/PROFILE engine. All five packages use MIT and include the license and
-third-party notices. Public source and npm publication remain separate owner
-approval steps. The old `judg3d@0.0.1` package only reserves the npm name.
+third-party notices. Source is public on GitHub; npm publication remains a
+separate owner approval step. The old `judg3d@0.0.1` package only reserves the npm name.
 
 ## Resulting behavior
 
@@ -50,8 +50,10 @@ Fixtures retain their original bytes and attribution.
 
 CI is configured for Linux with Node 22.13/24/26 and macOS with Node 26. A separate
 job scans full Git history using a pinned, checksum-verified Gitleaks binary.
-These workflows become verified remote evidence only after a push and passing
-runs. Local checks must not be described as remote CI success.
+The initial public candidate passed [all four CI environments](https://github.com/victorsodre/judg3d/actions/runs/34081809801)
+and the [history secret scan](https://github.com/victorsodre/judg3d/actions/runs/34081809768).
+Those runs identify their exact source revision. Check the latest main-branch
+run before a subsequent release; earlier results do not verify later changes.
 
 ## Limits and next steps
 
