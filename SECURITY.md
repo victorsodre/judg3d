@@ -22,7 +22,7 @@ maintained version; this early project has no long-term support branches.
 
 - The app listens on loopback only. It is not a hosted, multi-user service.
 - Uploaded files stay in memory during local analysis. No telemetry or remote
-  resource fetch is required. The UI stores only its language preference.
+  resource fetch is required. The UI does not persist preferences or assets.
 - CLI, HTTP and MCP analysis use a worker with a 30-second deadline and a
   256 MiB V8 old-generation limit. This is not an OS sandbox or total RSS cap.
 - Assets are limited to 64 MiB; profiles to 1 MiB. HTTP and MCP allow two

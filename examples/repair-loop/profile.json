@@ -1,0 +1,33 @@
+{
+  "id": "demo-repair-loop",
+  "version": "0.1.0",
+  "profileFormat": 1,
+  "extends": null,
+  "layers": {
+    "schema": {
+      "enabled": true,
+      "failOn": "error",
+      "report": "warn",
+      "ignoredIssues": [],
+      "severityOverrides": {},
+      "maxIssues": 0,
+      "maxPerCode": 50
+    },
+    "profile": {
+      "enabled": true,
+      "failOn": "error",
+      "budgets": {
+        "maxTriangles": 1000,
+        "maxVertices": null,
+        "maxMaterials": null,
+        "maxDrawCalls": null,
+        "maxTextureSize": null,
+        "nearLimit": 0
+      },
+      "requireSelfContained": true
+    },
+    "geometry": { "enabled": false },
+    "visual": { "enabled": false },
+    "semantic": { "enabled": false }
+  }
+}

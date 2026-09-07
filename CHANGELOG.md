@@ -9,10 +9,12 @@ First usable release candidate for local glTF/GLB acceptance checks.
 - Stable exit codes: accepted asset 0, rejected asset 1, infrastructure failure 2.
 - Atomic reports, input protection, bounded reads/processing and cancellation.
 - Workspace-restricted MCP, local-origin validation and static-file boundaries.
-- English-first interface with persistent pt-BR option; canonical reports in English.
+- English interface, diagnostics and canonical reports.
 - Rejection of contradictory received reports and bounded nested presentation.
 - MIT license, bundled third-party notices, contributor/security policies and
   reproducible acceptance-gate demonstration.
+- A reproducible authoring correction demo with unchanged profile rules,
+  first-user trial materials and package verification against the npm registry.
 - Clean-install verification for all five packages; CI and dependency updates.
 
 Geometry, rendering, baselines, inheritance and semantic judgments are not

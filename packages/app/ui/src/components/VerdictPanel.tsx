@@ -64,7 +64,6 @@ export function VerdictPanel({ report, serialized }: VerdictPanelProps) {
         </p>
       </div>
       <MetricsBar metrics={verdict.metrics} />
-      <p className="empty-note">{t.diagnostics}</p>
       <ViolationList violations={verdict.violations} />
 
       <div className="verdict__actions">

@@ -1,24 +1,16 @@
 import { describe, expect, it } from "vitest";
-import {
-  messages,
-  resolveLocale,
-  translate,
-  errorKey,
-  UiError,
-} from "../ui/src/messages.js";
+import { messages, errorKey, UiError } from "../ui/src/messages.js";
 
-describe("interface language", () => {
-  it("uses English until Brazilian Portuguese is explicitly selected", () => {
-    for (const value of [null, undefined, "", "pt", "fr", "invalid"])
-      expect(resolveLocale(value)).toBe("en");
-    expect(resolveLocale("pt-BR")).toBe("pt-BR");
+describe("English interface errors", () => {
+  it("preserves an actionable error code and its English message", () => {
+    const error = new UiError("invalidReport");
+    expect(errorKey(error)).toBe("invalidReport");
+    expect(error.message).toBe(messages.en.invalidReport);
+    expect(error.message).toContain("No verdict was accepted");
   });
-  it("has matching translation keys and localizes an existing error", () => {
-    expect(Object.keys(messages.en).sort()).toEqual(
-      Object.keys(messages["pt-BR"]).sort(),
-    );
-    const key = errorKey(new UiError("cancelled"));
-    expect(translate("en")[key]).toContain("Analysis cancelled");
-    expect(translate("pt-BR")[key]).toContain("Análise cancelada");
+  it("maps unexpected errors to safe connection copy", () => {
+    const error = new Error("private server details");
+    expect(errorKey(error)).toBe("network");
+    expect(messages.en[errorKey(error)]).not.toContain(error.message);
   });
 });

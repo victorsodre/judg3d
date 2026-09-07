@@ -15,7 +15,7 @@ type ResultState =
   | { kind: "error"; message: MessageKey };
 
 export function App() {
-  const { locale, setLocale, t } = useLocale();
+  const { t } = useLocale();
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [profileFile, setProfileFile] = useState("web-commerce.json");
   const [file, setFile] = useState<File | null>(null);
@@ -102,23 +102,6 @@ export function App() {
           <p className="brand__mark">judg3d</p>
           <p className="brand__tag">{t.tagline}</p>
         </div>
-        <label className="field language-picker">
-          <span className="field__label">{t.language}</span>
-          <select
-            className="field__control"
-            value={locale}
-            onChange={(event) => {
-              setLocale(event.target.value === "pt-BR" ? "pt-BR" : "en");
-            }}
-          >
-            <option value="en" lang="en">
-              English
-            </option>
-            <option value="pt-BR" lang="pt-BR">
-              Português (Brasil)
-            </option>
-          </select>
-        </label>
       </header>
 
       <main className="stage" aria-busy={pending}>

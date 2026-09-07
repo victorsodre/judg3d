@@ -43,21 +43,18 @@ infrastructure failure without a verdict. The demo checks repeated JSON output
 and input hashes. See the [reproduction guide](examples/acceptance-gate/README.md)
 and [case study](docs/case-study.md).
 
+To follow an actual asset correction against an unchanged profile, run
+`pnpm demo:repair`. The [repair-loop example](examples/repair-loop/README.md)
+verifies a 3,072-to-12 triangle reduction and both reports.
+
 The local interface shows exactly which checks ran:
 
 ![English interface showing a rejected sample asset, explicit coverage and actionable diagnostics](docs/assets/judg3d.png)
 
 ## Language
 
-English is the default for the interface, CLI, API, MCP and generated reports.
-The **Language** selector offers **English** and **Português (Brasil)**. An explicit
-choice is saved in this browser; browser language does not override the initial
-English default. If browser storage is unavailable, switching still works for
-the current page.
-
-Switching languages preserves the selected inputs and current verdict without
-running another analysis. Interface labels and number formatting are localized;
-technical diagnostics, profile identifiers and downloaded JSON remain in English.
+The interface, CLI, API, MCP and generated reports use English. The interface
+does not offer a language selector or store a language preference.
 User-supplied filenames and profile values are preserved as supplied.
 
 ## CLI and automation
@@ -203,6 +200,8 @@ and [agent integration guide](docs/agent-integration.md). Useful contributions
 include reproducible edge cases, downstream integration feedback and onboarding
 improvements. See the [roadmap](ROADMAP.md), [security policy](SECURITY.md),
 [support](SUPPORT.md) and [governance](GOVERNANCE.md).
+
+Trying judg3d for the first time? Start with the [tester guide](docs/launch/tester-guide.md).
 
 ## License
 

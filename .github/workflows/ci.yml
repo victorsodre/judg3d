@@ -41,4 +41,5 @@ jobs:
       - run: pnpm release:pack
       - run: pnpm release:check
       - run: node examples/acceptance-gate/run.mjs
+      - run: node examples/repair-loop/run.mjs
       - run: pnpm audit --audit-level=high

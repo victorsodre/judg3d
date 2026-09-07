@@ -20,6 +20,11 @@ import { StdioClientTransport } from "../packages/mcp/node_modules/@modelcontext
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../", import.meta.url));
 const artifacts = join(root, "artifacts/release");
+assert(
+  process.argv.slice(2).every((arg) => arg === "--registry"),
+  "Usage: node tools/check-release.mjs [--registry]",
+);
+const registry = process.argv.includes("--registry");
 const { packages } = JSON.parse(
   await readFile(join(artifacts, "manifest.json"), "utf8"),
 );
@@ -76,14 +81,40 @@ try {
       "--ignore-scripts",
       "--no-audit",
       "--no-fund",
-      ...packages.map((p) => join(artifacts, p.filename)),
+      "--registry=https://registry.npmjs.org",
+      ...(registry
+        ? packages.map((p) => `${p.name}@${p.version}`)
+        : packages.map((p) => join(artifacts, p.filename))),
     ],
     { cwd, timeout: 120_000 },
   );
   await writeFile(
-    join(artifacts, "install-check.log"),
+    join(
+      artifacts,
+      registry ? "registry-install-check.log" : "install-check.log",
+    ),
     install.stdout + install.stderr,
   );
+  if (registry) {
+    const lock = JSON.parse(
+      await readFile(join(cwd, "package-lock.json"), "utf8"),
+    );
+    for (const entry of packages) {
+      const installed = lock.packages[`node_modules/${entry.name}`];
+      assert.equal(installed.version, entry.version);
+      assert.equal(
+        new URL(installed.resolved).origin,
+        "https://registry.npmjs.org",
+      );
+      assert.equal(
+        installed.integrity,
+        `sha512-${createHash("sha512")
+          .update(await readFile(join(artifacts, entry.filename)))
+          .digest("base64")}`,
+        `${entry.name}: registry bytes differ from reviewed tarball`,
+      );
+    }
+  }
   const cli = join(cwd, "node_modules/judg3d/dist/index.js");
   const command = async (args, expected = 0) => {
     try {
@@ -164,7 +195,12 @@ try {
     assert.equal(home.status, 200);
     const html = await home.text();
     const script = html.match(/src="([^"]+\.js)"/)[1];
-    assert.equal((await fetch(new URL(script, url))).status, 200);
+    assert(html.includes('lang="en"'));
+    const javascript = await fetch(new URL(script, url));
+    assert.equal(javascript.status, 200);
+    const bundle = await javascript.text();
+    assert(bundle.includes("Judge asset"));
+    assert(!bundle.includes("Português (Brasil)"));
     const form = new FormData();
     form.set(
       "asset",
@@ -185,10 +221,14 @@ try {
     }
   }
   await writeFile(
-    join(artifacts, "verification.json"),
+    join(
+      artifacts,
+      registry ? "registry-verification.json" : "verification.json",
+    ),
     JSON.stringify(
       {
         node: process.version,
+        source: registry ? "npm-registry" : "local-tarballs",
         checks: [
           "tarball-integrity",
           "license-and-notices",
