@@ -6,7 +6,7 @@ launch plan, not a list of completed user interviews or adoption claims.
 
 | Stage         | Action                                                                        | Evidence to keep                                                                             |
 | ------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Distribution  | Publish the reviewed 0.1.0 packages and verify a clean registry installation. | Package versions, integrity hashes and installation results.                                 |
+| Distribution  | Publish the reviewed 0.2.0 packages and verify a clean registry installation. | Package versions, integrity hashes and installation results. 0.1.0 remains the last published set until then. |
 | Demonstration | Show an asset correction against an unchanged profile, then `judg3d compare`. | [Reproducible example](../../examples/repair-loop/README.md), reports and a short recording. |
 | First testers | Invite 3–5 developers who work with GLB/glTF.                                 | Consented feedback from actual attempts, including unsuccessful ones.                        |
 | Maintenance   | Reproduce reported problems, prioritize impact and fix verified bugs.         | Public issues and reviewed fixes, with private information removed.                          |

@@ -14,9 +14,10 @@ there is no guaranteed response time or paid bounty.
 
 ## Supported versions
 
-The current 0.1.0 candidate is the maintained implementation. The historical
-0.0.1 npm placeholder is not a usable validator. Security fixes target the latest
-maintained version; this early project has no long-term support branches.
+The current 0.2.0 source is the maintained implementation. 0.1.0 is the last
+published npm set. The historical 0.0.1 npm placeholder is not a usable
+validator. Security fixes target the latest maintained version; this early
+project has no long-term support branches.
 
 ## Boundaries
 

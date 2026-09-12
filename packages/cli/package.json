@@ -1,6 +1,6 @@
 {
   "name": "judg3d",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local glTF/GLB acceptance checks: CLI, MCP and app with deterministic profiles.",
   "type": "module",
   "bin": {

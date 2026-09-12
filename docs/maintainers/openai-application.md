@@ -28,8 +28,14 @@ published to npm on 2026-09-07 and verified through a clean registry installatio
 the 0.0.1 npm artifact is a placeholder.
 Its download count would not measure adoption of the working validator.
 
+On 2026-09-12 the source gained a reusable GitHub Action on `main`
+(`judg3d-gate`) and `judg3d compare` with a repair-loop FAILED→PASSED demo.
+Those are maintainer-built integrations, not independent usage. 0.2.0 is
+prepared in source; it is not yet a published npm set.
+
 The current evidence establishes a working deterministic acceptance gate,
-regression tests, local UI/MCP integration and reproducible package installation.
+regression tests, local UI/MCP integration, a compare command, a reusable
+Action and reproducible package installation.
 [Historical observations](../case-study.md) explain the motivation but do not
 establish broad ecosystem importance. MIT and contributor/security policies
 remove practical onboarding barriers; they do not create usage by themselves.
@@ -48,8 +54,12 @@ remove practical onboarding barriers; they do not create usage by themselves.
   [secret scan](https://github.com/victorsodre/judg3d/actions/runs/34085605430)
   passed before the English-only launch was merged.
 - The [repair-loop example](../../examples/repair-loop/README.md) verifies an
-  authoring correction against an unchanged profile. The [trial kit](../launch/README.md)
-  is ready; independent feedback has not yet been collected.
+  authoring correction against an unchanged profile, then `judg3d compare`
+  prints `FAILED → PASSED`. The reusable
+  [GitHub Action](../../.github/actions/judg3d-gate/README.md) and
+  [copy-paste workflow](../../examples/github-action/README.md) are on `main`.
+  The [trial kit](../launch/README.md) is ready; independent feedback has not
+  yet been collected.
 
 These are dated technical results. Recheck the latest revision and actual usage
 before submitting; repository publication does not itself demonstrate adoption.

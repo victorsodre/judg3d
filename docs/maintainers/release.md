@@ -44,7 +44,8 @@ require explicit authorization. A local passing check is not a remote CI result.
 
 ## Publish packages only after owner approval
 
-Confirm access to the `@judg3d/*` names and that version 0.1.0 is available.
+Confirm access to the `@judg3d/*` names and that version 0.2.0 is the next
+publish target (0.1.0 is already on the registry).
 Publish only the tarballs in the reviewed manifest, in dependency order:
 core → judge → app and mcp → cli. Scoped packages require public access.
 Use the owner's authorized npm authentication and publishing controls; do not
