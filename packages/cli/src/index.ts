@@ -4,6 +4,7 @@ import { Command, CommanderError } from "commander";
 import { EXIT_INFRA } from "@judg3d/core";
 import { engineVersions } from "@judg3d/judge";
 
+import { runCompareCommand } from "./commands/compare.js";
 import { runJudgeCommand } from "./commands/judge.js";
 import { CLI_VERSION } from "./version.js";
 
@@ -53,6 +54,62 @@ program
       },
     ) => {
       const code = await runJudgeCommand(asset, options, {
+        judg3dVersion: CLI_VERSION,
+        stdout: (line) => process.stdout.write(`${line}\n`),
+        stderr: (line) => process.stderr.write(`${line}\n`),
+      });
+      process.exitCode = code;
+    },
+  );
+
+program
+  .command("compare")
+  .description(
+    "Judge two glTF/GLB files against the same profile and write a metric/verdict diff.",
+  )
+  .argument("<before>", "path to the earlier .glb or .gltf file")
+  .argument("<after>", "path to the later .glb or .gltf file")
+  .requiredOption("-p, --profile <file>", "JSON profile containing the rules")
+  .option(
+    "-o, --out <file>",
+    "compare document destination (- for stdout only)",
+    "compare-report.json",
+  )
+  .option(
+    "--json",
+    "print the JSON compare document instead of the human summary",
+    false,
+  )
+  .option(
+    "--timestamp",
+    "include generatedAt on both judge reports (makes the document non-deterministic)",
+    false,
+  )
+  .addHelpText(
+    "after",
+    [
+      "",
+      "Both assets are judged independently with the same profile bytes.",
+      "Unperformed layers are never treated as PASS.",
+      "",
+      "Exit codes:",
+      "  0  both assets passed the checks that ran",
+      "  1  at least one asset failed; the compare document was still written",
+      "  2  infrastructure failure — no compare document was produced",
+    ].join("\n"),
+  )
+  .action(
+    async (
+      before: string,
+      after: string,
+      options: {
+        profile: string;
+        out: string;
+        json: boolean;
+        timestamp: boolean;
+      },
+    ) => {
+      const code = await runCompareCommand(before, after, options, {
         judg3dVersion: CLI_VERSION,
         stdout: (line) => process.stdout.write(`${line}\n`),
         stderr: (line) => process.stderr.write(`${line}\n`),

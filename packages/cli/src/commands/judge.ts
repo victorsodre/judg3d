@@ -4,14 +4,13 @@ import {
   EXIT_FAIL,
   EXIT_INFRA,
   EXIT_PASS,
-  InfraError,
   loadProfile,
   serializeReport,
   type ExitCode,
 } from "@judg3d/core";
 import { judgeIsolated, readAsset } from "@judg3d/judge";
 
-import { terminalText } from "../format.js";
+import { reportInfraFailure } from "../infra.js";
 import { renderReport } from "../render.js";
 
 export type JudgeCommandOptions = {
@@ -61,23 +60,4 @@ export async function runJudgeCommand(
     reportInfraFailure(error, context);
     return EXIT_INFRA;
   }
-}
-
-function reportInfraFailure(
-  error: unknown,
-  context: JudgeCommandContext,
-): void {
-  if (error instanceof InfraError) {
-    context.stderr(`judg3d: ${terminalText(error.message)}`);
-    if (error.detail !== undefined) {
-      context.stderr(terminalText(error.detail));
-    }
-  } else {
-    context.stderr(
-      `judg3d: unexpected failure — ${terminalText(error instanceof Error ? error.message : String(error))}`,
-    );
-  }
-  context.stderr(
-    "This is an infrastructure failure (exit 2), not an asset rejection.",
-  );
 }

@@ -20,16 +20,32 @@ mcp add` command shape was checked against the local CLI on 2026-09-07. The
 [official MCP documentation](https://developers.openai.com/codex/mcp) describes
 client setup and configuration options.
 
-The tool is `judge_asset`:
+The tools are `judge_asset` and `compare_assets`:
 
 ```json
 { "asset": "assets/product.glb", "profile": "profiles/product.json" }
 ```
 
-The response includes `structuredContent.ok`, `exitHint` and `report`.
-Asset rejection is a successful tool execution with `exitHint: 1`.
-Infrastructure failures set `isError: true` and return `exitHint: 2` in the
-error text. No result should be interpreted as a visual-quality score.
+```json
+{
+  "before": "assets/before.glb",
+  "after": "assets/after.glb",
+  "profile": "profiles/product.json"
+}
+```
+
+The response includes `structuredContent.ok`, `exitHint` and either `report`
+or `compare`. Asset rejection is a successful tool execution with `exitHint: 1`.
+`compare_assets` uses exitHint 0 only when both assets passed. Infrastructure
+failures set `isError: true` and return `exitHint: 2` in the error text.
+No result should be interpreted as a visual-quality score. A coverage note
+lists layers that did not run.
+
+The same comparison is available on the CLI:
+
+```sh
+judg3d compare assets/before.glb assets/after.glb -p profiles/product.json
+```
 
 ## GitHub Actions
 

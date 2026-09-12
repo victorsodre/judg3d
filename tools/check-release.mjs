@@ -151,6 +151,39 @@ try {
     2,
   );
   await command(["judge", "valido.glb"], 2);
+  const comparePass = [
+    "compare",
+    "valido.glb",
+    "valido-textura.glb",
+    "--profile",
+    profile,
+    "--out",
+    "-",
+  ];
+  const comparePassJson = await command(comparePass, 0);
+  assert.equal(comparePassJson, await command(comparePass, 0));
+  assert.deepEqual(JSON.parse(comparePassJson).verdicts, {
+    before: true,
+    after: true,
+  });
+  const compareFail = await command(
+    [
+      "compare",
+      "valido.glb",
+      "quebrado.glb",
+      "--profile",
+      profile,
+      "--out",
+      "-",
+    ],
+    1,
+  );
+  assert.equal(JSON.parse(compareFail).verdicts.after, false);
+  await command(
+    ["compare", "missing.glb", "valido.glb", "--profile", profile, "--out", "-"],
+    2,
+  );
+  await command(["compare", "valido.glb", "quebrado.glb"], 2);
   await mkdir(join(cwd, "profiles"));
   await copyFile(profile, join(cwd, "profiles/default.json"));
   const client = new Client({ name: "release-check", version: "1" });
@@ -234,6 +267,7 @@ try {
           "license-and-notices",
           "clean-install",
           "cli-exits-0-1-2",
+          "compare-exits-0-1-2",
           "determinism",
           "mcp-stdio",
           "http-ui",

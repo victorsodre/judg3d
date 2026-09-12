@@ -79,6 +79,68 @@ for (const [id, subdivisions, expectedExit, triangles] of [
 }
 assert.notEqual(cases[0].assetSha256, cases[1].assetSha256);
 assert.equal(hash(await readFile(join(root, profile))), profileHash);
+
+async function compare(expectedExit) {
+  let result;
+  try {
+    result = await exec(
+      process.execPath,
+      [
+        cli,
+        "compare",
+        "artifacts/repair-loop/before.glb",
+        "artifacts/repair-loop/after.glb",
+        "--profile",
+        profile,
+        "--out",
+        "-",
+      ],
+      {
+        cwd: root,
+        timeout: 70_000,
+        maxBuffer: 4 * 1024 * 1024,
+      },
+    );
+    assert.equal(expectedExit, 0);
+  } catch (error) {
+    assert.equal(error.code, expectedExit);
+    result = error;
+  }
+  assert.equal(result.stderr, "");
+  return result.stdout;
+}
+
+const compared = await compare(1);
+assert.equal(compared, await compare(1));
+const compareDocument = JSON.parse(compared);
+assert.equal(compareDocument.profile.sha256, profileHash);
+assert.deepEqual(compareDocument.verdicts, { before: false, after: true });
+assert.deepEqual(compareDocument.metrics.triangles, {
+  before: 3072,
+  after: 12,
+  delta: -3060,
+});
+assert.deepEqual(
+  compareDocument.violations.removed.map((row) => row.code),
+  ["TRIANGLES_OVER_BUDGET"],
+);
+assert.equal(compareDocument.violations.added.length, 0);
+assert.equal(compareDocument.coverage.equal, true);
+assert.match(
+  compareDocument.coverage.note,
+  /those layers are not PASS/,
+);
+await writeFile(join(output, "compare.json"), compared);
+cases.push({
+  id: "compare",
+  exit: 1,
+  triangles: { before: 3072, after: 12, delta: -3060 },
+  profileSha256: profileHash,
+  reportSha256: hash(compared),
+});
+process.stdout.write(
+  "compare: FAIL → PASS; 3,072 → 12 triangles; TRIANGLES_OVER_BUDGET removed\n",
+);
 await writeFile(
   join(output, "manifest.json"),
   JSON.stringify(

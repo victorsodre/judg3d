@@ -57,6 +57,26 @@ To follow an actual asset correction against an unchanged profile, run
 `pnpm demo:repair`. The [repair-loop example](examples/repair-loop/README.md)
 verifies a 3,072-to-12 triangle reduction and both reports.
 
+### Five-minute before/after trial
+
+From a source checkout after `pnpm install --frozen-lockfile && pnpm build`:
+
+```sh
+pnpm demo:repair
+pnpm judg3d compare artifacts/repair-loop/before.glb artifacts/repair-loop/after.glb \
+  -p examples/repair-loop/profile.json
+```
+
+The compare command judges both files against the **same profile bytes** and
+prints `FAILED → PASSED`, `3072 → 12` triangles, and
+`TRIANGLES_OVER_BUDGET` as removed. Exit **1** is expected: the before asset
+failed. Exit 0 would mean both assets passed. Exit 2 is infrastructure
+(including two different profile hashes). PASS still covers SCHEMA and PROFILE
+only; skipped layers are not visual or geometric approval.
+
+Published packages will grow a `compare` command in the next release; until
+then, run it from this repository.
+
 The local interface shows exactly which checks ran:
 
 ![English interface showing a rejected sample asset, explicit coverage and actionable diagnostics](docs/assets/judg3d.png)
@@ -76,16 +96,19 @@ pnpm judg3d judge model.glb -p profiles/agent-loop.json -o result.json
 # JSON on stdout without creating a report file.
 pnpm judg3d judge model.glb -p profiles/agent-loop.json --out -
 
+# Before/after diff against the same profile bytes.
+pnpm judg3d compare before.glb after.glb -p profiles/agent-loop.json -o compare-report.json
+
 # Runtime information and installed profile directory.
 pnpm judg3d engine
 pnpm judg3d profiles
 ```
 
-| Exit | Meaning                                                 |
-| ---- | ------------------------------------------------------- |
-| 0    | Asset passed the checks performed                       |
-| 1    | Asset failed; a report describes the violations         |
-| 2    | Configuration, I/O or processing failed; no new verdict |
+| Exit | `judge` | `compare`                                                          |
+| ---- | ------- | ------------------------------------------------------------------ |
+| 0    | Passed  | Both assets passed the checks that ran                             |
+| 1    | Failed  | At least one asset failed; the compare document was still written  |
+| 2    | Infra   | Configuration, I/O or processing failed; no new document           |
 
 Check the exit code before consuming a report file. An infrastructure failure
 preserves any existing report, which belongs to an earlier run. `--out -` is
@@ -142,8 +165,9 @@ through `extends`, or enabling PROFILE without SCHEMA also returns exit 2.
 
 ## MCP for agents
 
-The MCP server exposes `judge_asset` for reading local files. Configure the
-published CLI and restrict the workspace to your project:
+The MCP server exposes `judge_asset` and, in this repository, `compare_assets`
+for reading local files. Configure the published CLI and restrict the workspace
+to your project:
 
 ```json
 {
@@ -156,17 +180,25 @@ published CLI and restrict the workspace to your project:
 }
 ```
 
-Tool arguments:
+Tool arguments for `judge_asset`:
 
 ```json
 { "asset": "assets/product.glb", "profile": "profiles/product.json" }
 ```
 
+`compare_assets` takes `{ "before", "after", "profile" }`. Both sides must use
+the same profile bytes. The compare document records verdicts, metric deltas,
+violations added/removed/unchanged by code, and a coverage note. Differing
+coverage never turns an unperformed layer into PASS.
+
 Both paths, including symlink targets, must remain inside the workspace. The
-tool does not write reports or access URLs. It returns `structuredContent` with
-`ok`, `exitHint` and `report`. Asset rejection is a normal result (`exitHint: 1`);
-infrastructure failures use `isError: true` and `exitHint: 2`. Stdout is reserved
-for the protocol.
+tools do not write reports or access URLs. They return `structuredContent` with
+`ok`, `exitHint` and either `report` or `compare`. Asset rejection is a normal
+result (`exitHint: 1`); infrastructure failures use `isError: true` and
+`exitHint: 2`. Stdout is reserved for the protocol.
+
+`judg3d@0.1.0` on npm includes `judge_asset` only. Use this repository or a
+later release for `compare` / `compare_assets`.
 
 ## Limits and privacy
 

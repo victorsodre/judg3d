@@ -3,6 +3,7 @@ dist/
 client-dist/
 *.tsbuildinfo
 judge-report.json
+compare-report.json
 .DS_Store
 
 packages/app/bundled-profiles/

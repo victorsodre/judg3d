@@ -12,6 +12,7 @@ Use Node 22.13.0 or later and pnpm 11.22.0. From a fresh checkout:
 pnpm install --frozen-lockfile
 pnpm build
 pnpm demo
+pnpm demo:repair
 pnpm judg3d app
 ```
 

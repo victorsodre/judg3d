@@ -3,7 +3,16 @@ import { isAbsolute, relative, resolve, sep } from "node:path";
 import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
-import { InfraError, loadProfile, serializeReport } from "@judg3d/core";
+import {
+  compareExitCode,
+  compareReports,
+  InfraError,
+  loadProfile,
+  serializeCompare,
+  serializeReport,
+  type JudgeReport,
+  type LoadedProfile,
+} from "@judg3d/core";
 import { judgeIsolated, readAsset } from "@judg3d/judge";
 
 type ServerOptions = { root: string; version: string; timeoutMs?: number };
@@ -36,6 +45,38 @@ function failure(message: string): CallToolResult {
   };
 }
 
+const PATH_FIELD = z
+  .string()
+  .min(1)
+  .max(4096);
+
+const TOOL_HINTS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+} as const;
+
+async function judgeWorkspaceAsset(
+  root: string,
+  asset: string,
+  loaded: LoadedProfile,
+  version: string,
+  extra: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<JudgeReport> {
+  const assetPath = await workspaceFile(root, asset);
+  const input = await readAsset(assetPath);
+  input.uri = relative(root, assetPath).split(sep).join("/");
+  return judgeIsolated(
+    {
+      asset: input,
+      profile: loaded,
+      options: { judg3dVersion: version },
+    },
+    extra,
+  );
+}
+
 export async function createJudgeServer(
   options: ServerOptions,
 ): Promise<McpServer> {
@@ -44,6 +85,23 @@ export async function createJudgeServer(
     throw new InfraError("The workspace must be a directory.");
   const server = new McpServer({ name: "judg3d", version: options.version });
   let active = 0;
+  const isolation = (
+    signal: AbortSignal | undefined,
+  ): { timeoutMs?: number; signal?: AbortSignal } => ({
+    ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    ...(signal === undefined ? {} : { signal }),
+  });
+  const busy = (): CallToolResult | undefined =>
+    active >= 2
+      ? failure("Two analyses are already running. Try again when they finish.")
+      : undefined;
+  const asInfra = (error: unknown): CallToolResult =>
+    failure(
+      error instanceof InfraError
+        ? error.message.replaceAll(root, "[workspace]")
+        : "Could not analyze the local asset.",
+    );
+
   server.registerTool(
     "judge_asset",
     {
@@ -51,47 +109,23 @@ export async function createJudgeServer(
       description:
         "Validate glTF/GLB with SCHEMA and PROFILE. Paths are relative to the authorized workspace. Does not assess appearance, geometry or semantics. FAIL is a valid result; infrastructure failures return isError and exitHint 2. Does not read external resources or write files.",
       inputSchema: z.strictObject({
-        asset: z
-          .string()
-          .min(1)
-          .max(4096)
-          .describe("Asset path inside the workspace."),
-        profile: z
-          .string()
-          .min(1)
-          .max(4096)
-          .describe("JSON profile path inside the workspace."),
+        asset: PATH_FIELD.describe("Asset path inside the workspace."),
+        profile: PATH_FIELD.describe("JSON profile path inside the workspace."),
       }),
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: TOOL_HINTS,
     },
     async ({ asset, profile }, ctx) => {
-      if (active >= 2)
-        return failure(
-          "Two analyses are already running. Try again when they finish.",
-        );
+      const blocked = busy();
+      if (blocked !== undefined) return blocked;
       active += 1;
       try {
-        const assetPath = await workspaceFile(root, asset);
-        const profilePath = await workspaceFile(root, profile);
-        const input = await readAsset(assetPath);
-        input.uri = relative(root, assetPath).split(sep).join("/");
-        const report = await judgeIsolated(
-          {
-            asset: input,
-            profile: await loadProfile(profilePath),
-            options: { judg3dVersion: options.version },
-          },
-          {
-            ...(options.timeoutMs === undefined
-              ? {}
-              : { timeoutMs: options.timeoutMs }),
-            signal: ctx.mcpReq.signal,
-          },
+        const loaded = await loadProfile(await workspaceFile(root, profile));
+        const report = await judgeWorkspaceAsset(
+          root,
+          asset,
+          loaded,
+          options.version,
+          isolation(ctx.mcpReq.signal),
         );
         return {
           content: [{ type: "text", text: serializeReport(report) }],
@@ -102,11 +136,61 @@ export async function createJudgeServer(
           },
         };
       } catch (error) {
-        return failure(
-          error instanceof InfraError
-            ? error.message.replaceAll(root, "[workspace]")
-            : "Could not analyze the local asset.",
+        return asInfra(error);
+      } finally {
+        active -= 1;
+      }
+    },
+  );
+  server.registerTool(
+    "compare_assets",
+    {
+      title: "Compare two local 3D assets",
+      description:
+        "Judge two glTF/GLB files against the same profile and return a metric/verdict diff. Paths stay inside the authorized workspace. Both sides use one profile; differing profile bytes are an infrastructure failure. Unperformed layers are not PASS. Either asset FAIL is a valid result (exitHint 1). Does not write files or fetch URLs.",
+      inputSchema: z.strictObject({
+        before: PATH_FIELD.describe(
+          "Earlier asset path inside the workspace.",
+        ),
+        after: PATH_FIELD.describe("Later asset path inside the workspace."),
+        profile: PATH_FIELD.describe("JSON profile path inside the workspace."),
+      }),
+      annotations: TOOL_HINTS,
+    },
+    async ({ before, after, profile }, ctx) => {
+      const blocked = busy();
+      if (blocked !== undefined) return blocked;
+      active += 1;
+      try {
+        const loaded = await loadProfile(await workspaceFile(root, profile));
+        const extra = isolation(ctx.mcpReq.signal);
+        const beforeReport = await judgeWorkspaceAsset(
+          root,
+          before,
+          loaded,
+          options.version,
+          extra,
         );
+        const afterReport = await judgeWorkspaceAsset(
+          root,
+          after,
+          loaded,
+          options.version,
+          extra,
+        );
+        const compare = compareReports(beforeReport, afterReport, {
+          judg3dVersion: options.version,
+        });
+        return {
+          content: [{ type: "text", text: serializeCompare(compare) }],
+          structuredContent: {
+            ok: true,
+            exitHint: compareExitCode(compare),
+            compare,
+          },
+        };
+      } catch (error) {
+        return asInfra(error);
       } finally {
         active -= 1;
       }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatBytes, shortHash, violationDetail } from "../src/present.js";
+import {
+  formatBytes,
+  formatSignedDelta,
+  shortHash,
+  violationDetail,
+} from "../src/present.js";
 import type { Violation } from "../src/contract.js";
 
 /**
@@ -26,6 +31,14 @@ describe("formatBytes", () => {
 
   it("vira KB exatamente em 1024, nao antes", () => {
     expect(formatBytes(1024)).toBe("1.0 KB");
+  });
+});
+
+describe("formatSignedDelta", () => {
+  it("keeps zero unsigned and prefixes a plus for increases", () => {
+    expect(formatSignedDelta(0)).toBe("0");
+    expect(formatSignedDelta(12)).toBe("+12");
+    expect(formatSignedDelta(-3060)).toBe("-3060");
   });
 });
 

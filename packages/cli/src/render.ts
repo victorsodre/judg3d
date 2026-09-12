@@ -1,10 +1,14 @@
 import {
   countBySeverity,
   formatBytes,
+  formatSignedDelta,
   shortHash,
   violationDetail,
+  type CompareDocument,
   type JudgeReport,
+  type MetricDelta,
   type Violation,
+  type ViolationCodeDiff,
 } from "@judg3d/core";
 
 import {
@@ -97,6 +101,95 @@ function renderViolation(violation: Violation, codeWidth: number): string[] {
     lines.push(`         ${dim(terminalText(detail))}`);
   }
   return lines;
+}
+
+/** Human summary of two independent judge runs. */
+export function renderCompare(
+  document: CompareDocument,
+  outPath: string,
+): string {
+  const lines: string[] = [];
+  lines.push(
+    dim(
+      terminalText(
+        `judg3d ${document.judg3dVersion} · profile ${document.profile.id}@${document.profile.version} · sha256 ${shortHash(document.profile.sha256)}`,
+      ),
+    ),
+  );
+  lines.push(dim(terminalText(renderCompareSide("before", document.before))));
+  lines.push(dim(terminalText(renderCompareSide("after ", document.after))));
+  lines.push("");
+  lines.push(renderVerdictShift(document));
+  lines.push("");
+  lines.push(dim("metrics:"));
+  lines.push(dim(`  triangles    ${renderDelta(document.metrics.triangles)}`));
+  lines.push(dim(`  vertices     ${renderDelta(document.metrics.vertices)}`));
+  lines.push(dim(`  materials    ${renderDelta(document.metrics.materials)}`));
+  lines.push(dim(`  draw calls   ${renderDelta(document.metrics.drawCalls)}`));
+  lines.push(dim(`  asset bytes  ${renderDelta(document.metrics.assetBytes)}`));
+  if (document.metrics.textures !== undefined) {
+    lines.push(
+      dim(`  textures     ${renderDelta(document.metrics.textures.count)}`),
+    );
+    lines.push(
+      dim(`  max image    ${renderDelta(document.metrics.textures.maxSize)} px`),
+    );
+  }
+
+  lines.push("");
+  lines.push(dim("violations by code:"));
+  lines.push(...renderCodeGroup("removed", document.violations.removed));
+  lines.push(...renderCodeGroup("added  ", document.violations.added));
+  lines.push(...renderCodeGroup("kept   ", document.violations.unchanged));
+
+  lines.push("");
+  lines.push(
+    dim(
+      `layers: ${document.coverage.comparable.join(", ") || "(none)"}` +
+        (document.coverage.equal ? " (same coverage)" : " (coverage differs)"),
+    ),
+  );
+  lines.push(dim(document.coverage.note));
+  if (document.runtime.note !== undefined) {
+    lines.push(dim(document.runtime.note));
+  }
+  lines.push(dim(`report: ${terminalText(outPath)}`));
+  return lines.join("\n");
+}
+
+function renderCompareSide(label: string, report: JudgeReport): string {
+  const result = report.verdict.pass ? "PASSED" : "FAILED";
+  return `${label}  ${report.asset.uri}  ${formatBytes(report.asset.bytes)}  sha256 ${shortHash(report.asset.sha256)}  ${result}`;
+}
+
+function renderVerdictShift(document: CompareDocument): string {
+  const from = document.verdicts.before
+    ? green(bold("PASSED"))
+    : red(bold("FAILED"));
+  const to = document.verdicts.after
+    ? green(bold("PASSED"))
+    : red(bold("FAILED"));
+  return `${from}  →  ${to}`;
+}
+
+function renderDelta(metric: MetricDelta): string {
+  return `${metric.before} → ${metric.after}  (${formatSignedDelta(metric.delta)})`;
+}
+
+function renderCodeGroup(
+  label: string,
+  rows: readonly ViolationCodeDiff[],
+): string[] {
+  if (rows.length === 0) {
+    return [dim(`  ${label}  (none)`)];
+  }
+  return rows.map((row) => {
+    const counts =
+      row.before === row.after
+        ? `${row.before}`
+        : `${row.before} → ${row.after}`;
+    return `  ${label}  ${bold(terminalText(row.code))}  ${row.kind}  ${counts}`;
+  });
 }
 
 function renderMetrics(report: JudgeReport): string {

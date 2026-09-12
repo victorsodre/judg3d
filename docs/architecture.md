@@ -18,11 +18,11 @@ flowchart LR
 
 | Package | Responsibility                                                                             |
 | ------- | ------------------------------------------------------------------------------------------ |
-| core    | Strict profile parsing, contracts, hashes, report serialization, browser-safe presentation |
+| core    | Strict profile parsing, contracts, hashes, report/compare serialization, presentation      |
 | judge   | Khronos integration, PROFILE rules and isolated worker execution                           |
 | app     | Local HTTP transport and English/pt-BR interface                                           |
-| mcp     | Official SDK transport and read-only workspace-restricted tool                             |
-| cli     | Commands, exit codes, terminal presentation and atomic report writing                      |
+| mcp     | Official SDK transport and read-only workspace-restricted tools                            |
+| cli     | Commands (`judge`, `compare`), exit codes, terminal presentation and atomic report writing |
 
 ## Invariants
 
@@ -59,6 +59,14 @@ Tests exercise invalid assets/configuration, truncation, contradictory reports,
 large diagnostics, cancellation, path escapes, HTTP boundaries and real MCP
 transport. The clean-install check exercises packed artifacts. The demo ties
 three verdicts and an infrastructure error to reproducible inputs.
+
+`judg3d compare` runs two isolated `judge` evaluations with the same loaded
+profile, then derives a compare document. Profile identity is the SHA-256 of
+the original profile bytes; a mismatch is infrastructure failure, not a
+verdict. Runtime (`gltf-validator`, Node) differences are recorded and never
+interpreted as visual PASS. Coverage intersection is the only comparable
+layer set. Texture (and other optional) deltas are omitted unless both
+reports measured that field, so an unperformed check cannot become a zero.
 
 See [security](../SECURITY.md), [profiles](../profiles/README.md), and the
 [original specification](judg3d-spec-v0.md). The historical vision includes
