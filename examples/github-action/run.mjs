@@ -12,6 +12,8 @@ import {
   EXIT_PASS,
   cliPrefix,
   combineJudgeExits,
+  globPrefix,
+  globToRegExp,
   markdownSummary,
   parseAssetList,
   parseFailOn,
@@ -46,6 +48,11 @@ assert.equal(combineJudgeExits([1, 2]), EXIT_INFRA);
 assert.equal(stepExitCode(EXIT_FAIL, "rejected"), EXIT_FAIL);
 assert.equal(stepExitCode(EXIT_FAIL, "never"), EXIT_PASS);
 assert.equal(stepExitCode(EXIT_INFRA, "never"), EXIT_INFRA);
+assert.equal(globPrefix("fixtures/valido*.glb"), "fixtures");
+assert.equal(globPrefix("**/*.glb"), "");
+assert.ok(globToRegExp("fixtures/valido*.glb").test("fixtures/valido.glb"));
+assert.ok(globToRegExp("fixtures/valido*.glb").test("fixtures/valido-textura.glb"));
+assert.ok(!globToRegExp("fixtures/valido*.glb").test("fixtures/quebrado.glb"));
 
 const bundled = await mkdtemp(join(tmpdir(), "judg3d-profiles-"));
 await writeFile(join(bundled, "web-commerce.json"), "{}\n");
@@ -107,7 +114,7 @@ const actionYaml = await readFile(
   join(root, ".github/actions/judg3d-gate/action.yml"),
   "utf8",
 );
-assert.match(actionYaml, /^runs:\n  using: composite$/m);
+assert.match(actionYaml, /^runs:\n {2}using: composite$/m);
 for (const input of [
   "assets",
   "profile",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { glob, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { accessSync, constants as fsConstants } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -62,23 +62,64 @@ export function profileFileName(profile) {
   return name.endsWith(".json") ? name : `${name}.json`;
 }
 
-export async function collectGlob(globFn, pattern, cwd) {
-  const result = globFn(pattern, { cwd });
-  if (Array.isArray(result)) return result;
-  if (result && typeof result[Symbol.asyncIterator] === "function") {
-    const items = [];
-    for await (const item of result) items.push(item);
-    return items;
-  }
-  const awaited = await result;
-  return Array.isArray(awaited) ? awaited : [...awaited];
+export function globToRegExp(pattern) {
+  const source = pattern
+    .replace(/\\/g, "/")
+    .replace(/[.+^${}()|\\]/g, "\\$&")
+    .replace(/\*\*/g, "\0")
+    .replace(/\*/g, "[^/]*")
+    .replace(/\0/g, ".*")
+    .replace(/\?/g, "[^/]");
+  return new RegExp(`^${source}$`);
 }
 
-export async function expandAssets(tokens, cwd, globFn = glob) {
+export function globPrefix(pattern) {
+  const normalized = pattern.replace(/\\/g, "/");
+  const wildcard = normalized.search(/[*?[]/);
+  if (wildcard === -1) return "";
+  const cut = normalized.lastIndexOf("/", wildcard);
+  return cut === -1 ? "" : normalized.slice(0, cut);
+}
+
+export async function matchGlob(pattern, cwd) {
+  const regex = globToRegExp(pattern);
+  const prefix = globPrefix(pattern);
+  const start = prefix ? join(cwd, prefix) : cwd;
+  const files = [];
+  await walkFiles(start, prefix, (relativePath) => {
+    if (regex.test(relativePath)) files.push(relativePath);
+  });
+  return files.sort();
+}
+
+async function walkFiles(dir, rel, visit) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+  entries.sort((left, right) => left.name.localeCompare(right.name));
+  for (const entry of entries) {
+    const nextRel = rel ? `${rel}/${entry.name}` : entry.name;
+    const nextAbs = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "node_modules" || entry.name === ".git" || entry.name.startsWith(".")) {
+        continue;
+      }
+      await walkFiles(nextAbs, nextRel, visit);
+    } else if (entry.isFile()) visit(nextRel);
+  }
+}
+
+export async function expandAssets(tokens, cwd, globFn = matchGlob) {
   const assets = [];
   for (const token of tokens) {
     if (isGlob(token)) {
-      const matches = (await collectGlob(globFn, token, cwd)).sort();
+      const matches = (await globFn(token, cwd)).sort();
       if (matches.length === 0) {
         throw infraError(`No files matched ${token}.`);
       }
@@ -160,7 +201,7 @@ export function renderResult(result) {
     lines.push("", "| Severity | Code | Location | Detail |", "| --- | --- | --- | --- |");
     for (const violation of visible) {
       lines.push(
-        `| ${violation.severity} | \`${escapeCell(violation.code)}\` | ${escapeCell(violation.nodePath ?? "")} | ${escapeCell(detailOf(violation))} |`,
+        `| ${violation.severity} | \`${escapeCell(violation.code)}\` | ${escapeCell(violation.nodePath || "Entire document")} | ${escapeCell(detailOf(violation))} |`,
       );
     }
     if (visible.length < violations.length) {
