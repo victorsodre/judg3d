@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Composite GitHub Action and copy-paste workflow example that fail a job when
+  `judg3d judge` rejects a glTF/GLB (exit 1) and treat exit 2 as infrastructure
+  failure. The published CLI contract is unchanged.
+
 ## 0.1.0 — 2026-09-07
 
 First usable release for local glTF/GLB acceptance checks, published on npm.

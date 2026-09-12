@@ -1,0 +1,94 @@
+name: judg3d-gate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: judg3d-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pass-valid:
+    name: Valid GLB passes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Judge fixtures/valido.glb
+        id: gate
+        uses: ./.github/actions/judg3d-gate
+        with:
+          assets: |
+            fixtures/valido.glb
+            fixtures/valido-textura.glb
+          profile: web-commerce
+          version: "0.1.0"
+          artifact-name: judg3d-pass-valid
+      - name: Require acceptance
+        run: |
+          test "${{ steps.gate.outputs.passed }}" = "true"
+          test "${{ steps.gate.outputs.exit-code }}" = "0"
+
+  reject-broken:
+    name: Broken GLB is rejected
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Judge fixtures/quebrado.glb
+        id: gate
+        continue-on-error: true
+        uses: ./.github/actions/judg3d-gate
+        with:
+          assets: fixtures/quebrado.glb
+          profile: web-commerce
+          version: "0.1.0"
+          artifact-name: judg3d-fail-quebrado
+      - name: Require rejection
+        run: |
+          if [[ "${{ steps.gate.outcome }}" != "failure" ]]; then
+            echo "Expected the gate to fail for fixtures/quebrado.glb"
+            exit 1
+          fi
+          if [[ "${{ steps.gate.outputs.exit-code }}" != "1" ]]; then
+            echo "Expected exit-code 1, got '${{ steps.gate.outputs.exit-code }}'"
+            exit 1
+          fi
+          if [[ "${{ steps.gate.outputs.passed }}" != "false" ]]; then
+            echo "Expected passed=false"
+            exit 1
+          fi
+
+  reject-budget:
+    name: Valid GLB fails a small budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Judge fixtures/valido.glb against a 4-triangle budget
+        id: gate
+        continue-on-error: true
+        uses: ./.github/actions/judg3d-gate
+        with:
+          assets: fixtures/valido.glb
+          profile: examples/acceptance-gate/budget.json
+          version: "0.1.0"
+          artifact-name: judg3d-fail-budget
+      - name: Require budget rejection
+        run: |
+          if [[ "${{ steps.gate.outcome }}" != "failure" ]]; then
+            echo "Expected the gate to fail when the Box exceeds the demo budget"
+            exit 1
+          fi
+          test "${{ steps.gate.outputs.exit-code }}" = "1"

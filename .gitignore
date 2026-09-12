@@ -7,6 +7,7 @@ judge-report.json
 
 packages/app/bundled-profiles/
 artifacts/
+judg3d-reports/
 output/
 .playwright-cli/
 

@@ -95,6 +95,25 @@ shows up to 200 occurrences and points to the full JSON for the remainder.
 With timestamps disabled, identical inputs, paths and runtime produce
 byte-identical reports.
 
+### GitHub Action
+
+A composite action runs the same CLI through `npx` and fails the job when an
+asset is rejected (exit 1). Exit 2 is a hard error, not an asset verdict.
+
+```yaml
+- uses: victorsodre/judg3d/.github/actions/judg3d-gate@main
+  with:
+    assets: assets/product.glb
+    profile: web-commerce
+    version: "0.1.0"
+```
+
+Copy the [example workflow](examples/github-action/README.md), pin the action
+to a commit SHA, and replace the asset paths. Bundled names `web-commerce` and
+`agent-loop` resolve through `judg3d profiles`. Copy a profile when you need
+your own budgets. This repository exercises pass and fail fixtures in
+[.github/workflows/judg3d-gate.yml](.github/workflows/judg3d-gate.yml).
+
 ## Coverage and profiles
 
 | Layer                      | Available checks                                                                     |
