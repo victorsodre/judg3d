@@ -71,6 +71,8 @@ runs:
       uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
       with:
         node-version: ${{ inputs.node-version }}
+        # The caller repository may declare pnpm/yarn. This action only needs Node + npx.
+        package-manager-cache: false
 
     - name: Judge assets
       id: gate
@@ -96,14 +98,14 @@ runs:
         if-no-files-found: warn
 
     - name: Infrastructure failure
-      if: ${{ steps.gate.outputs.exit-code == '2' || (steps.gate.outcome == 'failure' && steps.gate.outputs.exit-code == '') }}
+      if: ${{ always() && steps.gate.outputs.exit-code != '0' && steps.gate.outputs.exit-code != '1' }}
       shell: bash
       run: |
         echo "::error::judg3d infrastructure failure (exit 2), not an asset rejection. No new verdict was produced. Check the profile path, Node version and CLI logs."
         exit 1
 
     - name: Asset rejected
-      if: ${{ steps.gate.outputs.exit-code == '1' && inputs.fail-on != 'never' }}
+      if: ${{ always() && steps.gate.outputs.exit-code == '1' && inputs.fail-on != 'never' }}
       shell: bash
       run: |
         echo "judg3d rejected one or more assets (exit 1). See the job summary and uploaded JSON report."

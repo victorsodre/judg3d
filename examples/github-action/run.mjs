@@ -115,6 +115,7 @@ const actionYaml = await readFile(
   "utf8",
 );
 assert.match(actionYaml, /^runs:\n {2}using: composite$/m);
+assert.match(actionYaml, /package-manager-cache: false/);
 for (const input of [
   "assets",
   "profile",
