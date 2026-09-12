@@ -1,16 +1,26 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-09-12
 
-- `judg3d compare <before> <after> -p <profile>` judges two assets against the
-  same profile bytes and writes a compare document (verdicts, metric deltas,
-  violations by code, coverage/runtime notes). Exit 0 only when both pass;
-  exit 1 when either fails; exit 2 for infrastructure, including mismatched
-  profile hashes. Unperformed layers are never treated as PASS. MCP exposes
-  the same comparison as `compare_assets`.
-- Composite GitHub Action and copy-paste workflow example that fail a job when
-  `judg3d judge` rejects a glTF/GLB (exit 1) and treat exit 2 as infrastructure
-  failure. The published CLI contract is unchanged.
+Source prepared for the next npm publication. **0.1.0 remains the last
+registry release** until these packages are published.
+
+### Headline features
+
+- **Reusable GitHub Action.** `judg3d-gate` and a copy-paste workflow fail a
+  job when `judg3d judge` rejects a glTF/GLB (exit 1) and treat exit 2 as
+  infrastructure. Profile `failOn` still owns the verdict. The Action pins
+  the published `judg3d@0.1.0` CLI until 0.2.0 is on npm.
+- **`judg3d compare`.** Judges two assets against the same profile bytes and
+  writes a before/after document (verdicts, metric deltas, violations by
+  code, coverage/runtime notes). Exit 0 only when both pass; exit 1 when
+  either fails; exit 2 for infrastructure, including mismatched profile
+  hashes. Unperformed layers are never treated as PASS. MCP exposes the same
+  comparison as `compare_assets`. The repair-loop demo (`pnpm demo:repair`)
+  shows `FAILED → PASSED` and `3072 → 12` triangles.
+
+Geometry, rendering, baselines, inheritance and semantic judgments are not
+implemented. This entry does not claim independent adoption.
 
 ## 0.1.0 — 2026-09-07
 

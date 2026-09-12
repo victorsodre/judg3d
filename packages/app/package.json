@@ -1,6 +1,6 @@
 {
   "name": "@judg3d/app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Local judg3d app: UI and API powered by @judg3d/judge.",
   "engines": {

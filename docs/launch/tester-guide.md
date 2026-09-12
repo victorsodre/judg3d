@@ -6,11 +6,16 @@ You do not need an OpenAI account or API key.
 
 ## Start locally
 
-Start the published app:
+Start the local app, then judge or compare from the same CLI:
 
 ```sh
-npx --yes judg3d@0.1.0 app
+npx --yes judg3d@0.2.0 app
+npx --yes judg3d@0.2.0 judge model.glb -p web-commerce
+npx --yes judg3d@0.2.0 compare before.glb after.glb -p profile.json
 ```
+
+Until 0.2.0 is on npm, use a source checkout (`pnpm judg3d …`) or
+`judg3d@0.1.0` for `app` and `judge`. `compare` is only in this 0.2.0 source.
 
 Open the address printed by the app. Your asset is processed locally; it is not
 uploaded to a hosted service. Stop the server with `Ctrl+C`.

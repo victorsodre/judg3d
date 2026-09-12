@@ -4,9 +4,9 @@
   "formUrl": "https://openai.com/form/codex-for-oss/",
   "repositoryUrl": "https://github.com/victorsodre/judg3d",
   "role": "Primary maintainer",
-  "whyRepositoryQualifies": "judg3d is an early-stage MIT-licensed acceptance gate for glTF/GLB asset pipelines. It combines Khronos validation with versioned budgets, explicit coverage and deterministic reports, usable through CLI, local UI and MCP. Its ecosystem contribution is giving humans and coding agents a reproducible external check of 3D outputs. I can demonstrate real pass/fail/infra cases; I am not claiming broad adoption yet.",
+  "whyRepositoryQualifies": "judg3d is an early-stage MIT-licensed acceptance gate for glTF/GLB pipelines. It combines Khronos validation with versioned budgets, explicit coverage and deterministic reports via CLI, local UI, MCP, compare, and a reusable GitHub Action. It gives humans and coding agents a reproducible external check of 3D outputs. I can show pass/fail/infra and a repair-loop demo; I am not claiming independent adoption.",
   "apiCreditUse": "I would use credits for maintainer-approved regression-test proposals, reproducer reduction, issue triage and release-note drafts. I would evaluate suggestions against deterministic fixtures and human review, with per-run and monthly spending limits. No automatic merges or release publication, and no private user assets sent without permission. judg3d itself remains usable without an API key or paid model.",
-  "additionalContext": "I am the primary maintainer. Version 0.1.0 is published on npm with CLI, local UI and MCP entry points. The repository has 121 regression tests, multi-platform CI, clean registry-install checks and a reproducible asset correction demo using an unchanged profile. Coverage is SCHEMA and PROFILE; visual and semantic judging are not implemented. A first-user trial kit is ready, but independent adoption is not yet established.",
+  "additionalContext": "I am the primary maintainer. 0.1.0 is on npm with CLI, local UI and MCP. This 0.2.0 source adds judg3d compare, a repair-loop FAILED→PASSED demo, and a reusable GitHub Action on main. Coverage is SCHEMA and PROFILE; visual and semantic judging are not implemented. A first-user trial kit is ready. Independent adoption is not yet established.",
   "beforeSubmitting": [
     "Recheck the official form, program terms and current project metrics.",
     "Update usage claims only with independently observed outcomes and consented public evidence.",
@@ -16,6 +16,8 @@
   "publicEvidence": [
     "https://www.npmjs.com/package/judg3d",
     "https://github.com/victorsodre/judg3d/actions/runs/34085605486",
+    "https://github.com/victorsodre/judg3d/tree/main/.github/actions/judg3d-gate",
+    "https://github.com/victorsodre/judg3d/tree/main/examples/github-action",
     "https://github.com/victorsodre/judg3d/tree/main/examples/repair-loop",
     "https://github.com/victorsodre/judg3d/tree/main/docs/launch"
   ]
