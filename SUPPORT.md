@@ -1,7 +1,8 @@
 # Getting help
 
-Start with the [README](README.md), [profile guide](profiles/README.md) and
-[acceptance-gate demo](examples/acceptance-gate/README.md).
+Start with the [README](README.md), [profile guide](profiles/README.md),
+[acceptance-gate demo](examples/acceptance-gate/README.md) and
+[GitHub Action example](examples/github-action/README.md).
 
 For a bug, use the bug report template and include the judg3d version, Node
 version, operating system, profile and smallest shareable reproduction. State

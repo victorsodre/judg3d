@@ -1,0 +1,23 @@
+# Copy to .github/workflows/judg3d-gate.yml in a consumer repository.
+# Replace the asset paths. Pin the action to a commit SHA after the first trial.
+name: judg3d-gate
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  judge-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: victorsodre/judg3d/.github/actions/judg3d-gate@main
+        with:
+          assets: |
+            assets/**/*.glb
+          profile: web-commerce
+          version: "0.1.0"

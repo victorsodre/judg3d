@@ -1,0 +1,112 @@
+name: judg3d-gate
+description: Fail a job when a glTF/GLB is rejected by a judg3d profile.
+author: judg3d
+
+inputs:
+  assets:
+    description: >
+      One or more .glb/.gltf paths, separated by newlines, spaces or commas.
+      Globs such as assets/**/*.glb are expanded.
+    required: true
+  profile:
+    description: >
+      Path to a profile JSON file, or a bundled profile name
+      (web-commerce, agent-loop). Bundled names resolve through `judg3d profiles`.
+    required: true
+  version:
+    description: npm version or dist-tag used as `npx --yes judg3d@<version>`.
+    required: false
+    default: "0.1.0"
+  fail-on:
+    description: >
+      When to fail the GitHub step after a completed judge run. `rejected`
+      (default) fails on CLI exit 1. `never` still writes the report and
+      summary but does not fail the step on a rejected asset. Exit 2 is always
+      a hard error. The profile still owns failOn for the verdict.
+    required: false
+    default: rejected
+  cli:
+    description: >
+      Optional local CLI prefix instead of npx, for example
+      `node packages/cli/dist/index.js` after building this repository.
+    required: false
+    default: ""
+  report-dir:
+    description: Directory for per-asset JSON reports.
+    required: false
+    default: judg3d-reports
+  upload-report:
+    description: Upload JSON reports as a workflow artifact.
+    required: false
+    default: "true"
+  artifact-name:
+    description: Artifact name when upload-report is true. Must be unique per job.
+    required: false
+    default: judg3d-reports
+  node-version:
+    description: Node.js version installed when the action uses npx.
+    required: false
+    default: "22.13.0"
+  working-directory:
+    description: Working directory for asset and profile paths. Defaults to the workspace root.
+    required: false
+    default: ""
+
+outputs:
+  passed:
+    description: true when every judged asset returned CLI exit 0
+    value: ${{ steps.gate.outputs.passed }}
+  exit-code:
+    description: Combined judg3d exit code (0 pass, 1 reject, 2 infrastructure)
+    value: ${{ steps.gate.outputs.exit-code }}
+  report-dir:
+    description: Directory containing JSON reports
+    value: ${{ steps.gate.outputs.report-dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      if: ${{ inputs.cli == '' }}
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+      with:
+        node-version: ${{ inputs.node-version }}
+        # The caller repository may declare pnpm/yarn. This action only needs Node + npx.
+        package-manager-cache: false
+
+    - name: Judge assets
+      id: gate
+      continue-on-error: true
+      shell: bash
+      working-directory: ${{ inputs.working-directory || github.workspace }}
+      env:
+        JUDG3D_ASSETS: ${{ inputs.assets }}
+        JUDG3D_PROFILE: ${{ inputs.profile }}
+        JUDG3D_VERSION: ${{ inputs.version }}
+        JUDG3D_FAIL_ON: ${{ inputs.fail-on }}
+        JUDG3D_CLI: ${{ inputs.cli }}
+        JUDG3D_REPORT_DIR: ${{ inputs.report-dir }}
+        JUDG3D_WORKING_DIRECTORY: ${{ inputs.working-directory || github.workspace }}
+      run: node "${{ github.action_path }}/gate.mjs"
+
+    - name: Upload JSON reports
+      if: ${{ always() && inputs.upload-report == 'true' }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory || github.workspace }}/${{ inputs.report-dir }}
+        if-no-files-found: warn
+
+    - name: Infrastructure failure
+      if: ${{ always() && steps.gate.outputs.exit-code != '0' && steps.gate.outputs.exit-code != '1' }}
+      shell: bash
+      run: |
+        echo "::error::judg3d infrastructure failure (exit 2), not an asset rejection. No new verdict was produced. Check the profile path, Node version and CLI logs."
+        exit 1
+
+    - name: Asset rejected
+      if: ${{ always() && steps.gate.outputs.exit-code == '1' && inputs.fail-on != 'never' }}
+      shell: bash
+      run: |
+        echo "judg3d rejected one or more assets (exit 1). See the job summary and uploaded JSON report."
+        exit 1

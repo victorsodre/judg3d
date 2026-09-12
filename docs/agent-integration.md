@@ -31,6 +31,13 @@ Asset rejection is a successful tool execution with `exitHint: 1`.
 Infrastructure failures set `isError: true` and return `exitHint: 2` in the
 error text. No result should be interpreted as a visual-quality score.
 
+## GitHub Actions
+
+The same CLI exits apply in CI. A composite action runs
+`npx --yes judg3d@<version> judge` and fails the job on exit 1. Exit 2 is an
+infrastructure error, not an asset verdict. See
+[examples/github-action](../examples/github-action/README.md).
+
 ## A bounded authoring loop
 
 1. Select the acceptance profile before changing the asset; record its hash.

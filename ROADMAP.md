@@ -20,7 +20,8 @@ release covers SCHEMA and PROFILE through CLI, local HTTP/UI and MCP.
   rights, source versions and checksums recorded.
 - Explore report comparison with an explicit design for profile/runtime changes;
   a baseline must never turn an unperformed check into PASS.
-- Add CI integrations after real users identify useful environments and outputs.
+- Reusable GitHub Action (`judg3d-gate`) and a copy-paste workflow example that
+  fail a PR on asset rejection. Other CI hosts can reuse the same CLI exits.
 
 ## Broader asset checks
 

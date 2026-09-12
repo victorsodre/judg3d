@@ -11,6 +11,8 @@ judg3d profiles
 ```
 
 Exit 0: passed. Exit 1: failed. Exit 2: infrastructure failure without a new verdict.
+A reusable GitHub Action wraps this command; see the
+[repository README](../../README.md#github-action).
 `--out -` prints JSON only. The app runs at http://127.0.0.1:8787 and uses English.
 SCHEMA and PROFILE are available; geometry, appearance and semantics are not evaluated.
 Assets up to 64 MiB, profiles up to 1 MiB, analyses up to 30 seconds.
