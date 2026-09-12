@@ -1,3 +1,8 @@
+import {
+  compareReports,
+  serializeCompare,
+  type CompareDocument,
+} from "./compare.js";
 import type { Violation } from "./contract.js";
 import type { JudgeReport } from "./report.js";
 
@@ -125,6 +130,37 @@ export function formatBytes(
 /** Short hash prefix for human-readable output. */
 export function shortHash(hex: string): string {
   return hex.slice(0, 12);
+}
+
+/** Signed integer delta for human-readable compare output. */
+export function formatSignedDelta(delta: number): string {
+  if (delta === 0) {
+    return "0";
+  }
+  return delta > 0 ? `+${delta}` : `${delta}`;
+}
+
+/** Validate a received compare document against a fresh derivation from its reports. */
+export function isCompareDocument(value: unknown): value is CompareDocument {
+  const document = asRecord(value);
+  if (
+    typeof document["judg3dVersion"] !== "string" ||
+    !isJudgeReport(document["before"]) ||
+    !isJudgeReport(document["after"])
+  ) {
+    return false;
+  }
+  try {
+    const expected = compareReports(document["before"], document["after"], {
+      judg3dVersion: document["judg3dVersion"],
+    });
+    return (
+      serializeCompare(expected) ===
+      serializeCompare(value as CompareDocument)
+    );
+  } catch {
+    return false;
+  }
 }
 
 /** Preserve layer diagnostics or show actionable got/want values when no message is supplied. */

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `judg3d compare <before> <after> -p <profile>` judges two assets against the
+  same profile bytes and writes a compare document (verdicts, metric deltas,
+  violations by code, coverage/runtime notes). Exit 0 only when both pass;
+  exit 1 when either fails; exit 2 for infrastructure, including mismatched
+  profile hashes. Unperformed layers are never treated as PASS. MCP exposes
+  the same comparison as `compare_assets`.
 - Composite GitHub Action and copy-paste workflow example that fail a job when
   `judg3d judge` rejects a glTF/GLB (exit 1) and treat exit 2 as infrastructure
   failure. The published CLI contract is unchanged.

@@ -38,9 +38,10 @@ pnpm judg3d app
    judge it again with the same profile. judg3d does not repair the asset.
 5. Download the report and decide whether it gives enough information to act.
 
-For a known before/after pair, use the [repair-loop example](../../examples/repair-loop/README.md).
-A processing/configuration error is not an asset rejection. PASS applies only
-to the layers listed in the report and does not certify visual quality.
+For a known before/after pair, use the [repair-loop example](../../examples/repair-loop/README.md)
+and `judg3d compare` on the two exports. A processing/configuration error is
+not an asset rejection. PASS applies only to the layers listed in the report
+and does not certify visual quality.
 
 ## Send useful feedback
 

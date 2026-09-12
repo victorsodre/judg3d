@@ -11,6 +11,18 @@ export {
   type Violation,
 } from "./contract.js";
 
+export {
+  compareExitCode,
+  compareReports,
+  coverageCompareNote,
+  serializeCompare,
+  type CompareDocument,
+  type CompareMetrics,
+  type CompareOptions,
+  type MetricDelta,
+  type ViolationCodeDiff,
+} from "./compare.js";
+
 export { InfraError, isInfraError } from "./errors.js";
 
 export {
@@ -24,6 +36,8 @@ export { sha256Hex } from "./hash.js";
 
 export {
   formatBytes,
+  formatSignedDelta,
+  isCompareDocument,
   messageOf,
   shortHash,
   violationDetail,

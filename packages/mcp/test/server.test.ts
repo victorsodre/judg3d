@@ -23,8 +23,12 @@ describe("MCP real", () => {
         await server.connect(a);
         await client.connect(b);
         const listing = await client.listTools();
-        expect(listing.tools.map((tool) => tool.name)).toEqual(["judge_asset"]);
+        expect(listing.tools.map((tool) => tool.name)).toEqual([
+          "judge_asset",
+          "compare_assets",
+        ]);
         expect(listing.tools[0]?.annotations?.readOnlyHint).toBe(true);
+        expect(listing.tools[1]?.annotations?.readOnlyHint).toBe(true);
         for (const [asset, exitHint] of [
           ["valido.glb", 0],
           ["quebrado.glb", 1],
@@ -44,6 +48,47 @@ describe("MCP real", () => {
           });
           expect(JSON.stringify(result)).not.toContain(root);
         }
+        const compared = await client.callTool({
+          name: "compare_assets",
+          arguments: {
+            before: "fixtures/valido.glb",
+            after: "fixtures/quebrado.glb",
+            profile: "profiles/web-commerce.json",
+          },
+        });
+        expect(compared.isError).not.toBe(true);
+        expect(compared.structuredContent).toMatchObject({
+          ok: true,
+          exitHint: 1,
+          compare: {
+            verdicts: { before: true, after: false },
+            coverage: { equal: true },
+          },
+        });
+        const compare = compared.structuredContent as {
+          compare: {
+            violations: { added: { code: string }[] };
+            coverage: { note: string };
+          };
+        };
+        expect(compare.compare.violations.added.map((row) => row.code)).toContain(
+          "UNRESOLVED_REFERENCE",
+        );
+        expect(compare.compare.coverage.note).toContain("those layers are not PASS");
+
+        const bothPass = await client.callTool({
+          name: "compare_assets",
+          arguments: {
+            before: "fixtures/valido.glb",
+            after: "fixtures/valido-textura.glb",
+            profile: "profiles/web-commerce.json",
+          },
+        });
+        expect(bothPass.structuredContent).toMatchObject({
+          ok: true,
+          exitHint: 0,
+        });
+
         const missing = await client.callTool({
           name: "judge_asset",
           arguments: {
@@ -81,6 +126,16 @@ describe("MCP real", () => {
         expect(result.isError).toBe(true);
         expect(JSON.stringify(result)).toContain("authorized workspace");
         expect(JSON.stringify(result)).not.toContain("private content");
+        const compared = await client.callTool({
+          name: "compare_assets",
+          arguments: {
+            before: asset,
+            after: asset,
+            profile: "profile.json",
+          },
+        });
+        expect(compared.isError).toBe(true);
+        expect(JSON.stringify(compared)).not.toContain("private content");
       }
     } finally {
       await client.close();

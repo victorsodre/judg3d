@@ -11,7 +11,7 @@ report, automatic repair animation or claim of an independent user.
 | 20–32 s | Keep the report visible; show the profile and asset hashes. | “The profile is the acceptance policy. It stays unchanged.”                                                    |
 | 32–43 s | Upload `after.glb`.                                         | “The authoring script removes redundant subdivisions from the six planar faces. judg3d checks the new export.” |
 | 43–53 s | Run the check; show PASS and 12 triangles.                  | “Twelve triangles. The same profile passes the corrected asset.”                                               |
-| 53–60 s | Show coverage and repository address.                       | “Local CLI, UI and MCP. SCHEMA and PROFILE today. Try judg3d with an asset from your own pipeline.”            |
+| 53–60 s | Show `judg3d compare` FAIL → PASS and the triangle delta.   | “One command diffs both reports against the same profile. SCHEMA and PROFILE today. Try it on your pipeline.” |
 
 Use short captions with enough time to read the numbers. The downloadable JSON
 contains the complete report. The demo does not establish visual quality or

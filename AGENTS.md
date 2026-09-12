@@ -12,6 +12,7 @@ pnpm typecheck      # tsc --build --force + the test project
 pnpm lint           # type-aware eslint
 pnpm test           # build + vitest run
 pnpm judg3d judge <asset> --profile profiles/web-commerce.json
+pnpm judg3d compare <before> <after> --profile profiles/web-commerce.json
 pnpm fixtures:fetch # re-download Khronos GLBs and verify sha256
 ```
 

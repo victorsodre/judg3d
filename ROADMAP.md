@@ -18,8 +18,12 @@ release covers SCHEMA and PROFILE through CLI, local HTTP/UI and MCP.
 - Validate the documented setup in downstream projects using glTF/GLB assets.
 - Expand fixtures for real exporter and validator edge cases, with redistribution
   rights, source versions and checksums recorded.
-- Explore report comparison with an explicit design for profile/runtime changes;
-  a baseline must never turn an unperformed check into PASS.
+- `judg3d compare` diffs two independent judge runs that share profile bytes.
+  A profile-hash mismatch is infrastructure failure. Runtime differences are
+  recorded without claiming raster identity. Coverage notes list skipped
+  layers so a baseline cannot turn an unperformed check into PASS.
+- Further comparison work (recurrence counting across a series of reports,
+  visual baselines) still needs its own specification.
 - Reusable GitHub Action (`judg3d-gate`) and a copy-paste workflow example that
   fail a PR on asset rejection. Other CI hosts can reuse the same CLI exits.
 
