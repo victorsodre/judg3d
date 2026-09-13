@@ -23,7 +23,15 @@ export async function assertReportDestination(
     );
   }
   for (const input of inputs) {
-    const info = await stat(input);
+    const info = await stat(input).catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+        return undefined;
+      }
+      throw error;
+    });
+    if (info === undefined) {
+      continue;
+    }
     if (
       (await realpath(input)) === canonical ||
       (destination?.dev === info.dev && destination.ino === info.ino)
@@ -74,7 +82,10 @@ async function writeAtomic(
     await rename(temporary, path);
   } catch (cause) {
     if (cause instanceof InfraError) throw cause;
-    throw new InfraError(failure);
+    throw new InfraError(
+      failure,
+      cause instanceof Error ? cause.message : String(cause),
+    );
   } finally {
     await rm(temporary, { force: true });
   }
