@@ -184,6 +184,24 @@ try {
     2,
   );
   await command(["compare", "valido.glb", "quebrado.glb"], 2);
+  const fixPlan = [
+    "fix",
+    "quebrado.glb",
+    "--profile",
+    profile,
+    "--report",
+    "-",
+  ];
+  const fixJson = await command(fixPlan, 0);
+  assert.equal(fixJson, await command(fixPlan, 0));
+  assert.equal(JSON.parse(fixJson).mode, "plan");
+  assert.equal(JSON.parse(fixJson).before.verdict.pass, false);
+  await command(
+    ["fix", "valido.glb", "--profile", profile, "--apply", "--report", "-"],
+    0,
+  );
+  await command(["fix", "missing.glb", "--profile", profile, "--report", "-"], 2);
+  await command(["fix", "valido.glb"], 2);
   await mkdir(join(cwd, "profiles"));
   await copyFile(profile, join(cwd, "profiles/default.json"));
   const client = new Client({ name: "release-check", version: "1" });
@@ -268,6 +286,7 @@ try {
           "clean-install",
           "cli-exits-0-1-2",
           "compare-exits-0-1-2",
+          "fix-plan-and-apply",
           "determinism",
           "mcp-stdio",
           "http-ui",

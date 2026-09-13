@@ -23,6 +23,16 @@ import {
   runGate,
   stepExitCode,
 } from "../../.github/actions/judg3d-gate/gate.mjs";
+import {
+  COMMENT_MARKER,
+  jobLogUrl,
+  metricsVsBudget,
+  parseCommentMode,
+  prCommentBody,
+  pullRequestNumber,
+  shouldPostComment,
+  upsertPrComment,
+} from "../../.github/actions/judg3d-gate/comment.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -127,9 +137,119 @@ for (const input of [
   "artifact-name",
   "node-version",
   "working-directory",
+  "comment",
 ]) {
   assert.match(actionYaml, new RegExp(`^  ${input}:$`, "m"), input);
 }
+
+assert.equal(parseCommentMode("auto"), "auto");
+assert.equal(parseCommentMode("true"), "true");
+assert.equal(parseCommentMode("bogus"), null);
+assert.equal(shouldPostComment("auto", "pull_request"), true);
+assert.equal(shouldPostComment("auto", "push"), false);
+assert.equal(shouldPostComment("false", "pull_request"), false);
+assert.equal(shouldPostComment("true", "push"), true);
+assert.equal(pullRequestNumber({ GITHUB_REF: "refs/pull/42/merge" }), 42);
+assert.equal(
+  jobLogUrl({
+    GITHUB_SERVER_URL: "https://github.com",
+    GITHUB_REPOSITORY: "victorsodre/judg3d",
+    GITHUB_RUN_ID: "99",
+  }),
+  "https://github.com/victorsodre/judg3d/actions/runs/99",
+);
+
+const comment = prCommentBody({
+  results: [
+    {
+      kind: "judge",
+      asset: "fixtures/valido.glb",
+      exit: EXIT_FAIL,
+      reportPath: "judg3d-reports/01-valido.json",
+      serialized: "{}\n",
+      report: {
+        profile: { id: "budget", version: "0.1.0" },
+        asset: {
+          uri: "fixtures/valido.glb",
+          bytes: 1664,
+          sha256: "b".repeat(64),
+        },
+        coverage: { ran: ["SCHEMA", "PROFILE"], skipped: [] },
+        verdict: {
+          pass: false,
+          metrics: { triangles: 12, vertices: 24, materials: 1, drawCalls: 1 },
+          violations: [
+            {
+              severity: "error",
+              code: "TRIANGLES_OVER_BUDGET",
+              nodePath: "",
+              got: { metric: "triangles", value: 12 },
+              want: { metric: "triangles", max: 4 },
+            },
+          ],
+        },
+      },
+    },
+  ],
+  compare: {
+    verdicts: { before: false, after: true },
+    metrics: {
+      triangles: { before: 3072, after: 12, delta: -3060 },
+      assetBytes: { before: 2000, after: 400, delta: -1600 },
+    },
+    violations: { removed: [{ code: "TRIANGLES_OVER_BUDGET" }] },
+  },
+  jobUrl: "https://github.com/victorsodre/judg3d/actions/runs/99",
+});
+assert.match(comment, new RegExp(COMMENT_MARKER));
+assert.match(comment, /❌ judg3d failed/);
+assert.match(comment, /fixtures\/valido.glb/);
+assert.match(comment, /triangles 12\/4/);
+assert.match(comment, /1664 bytes/);
+assert.match(comment, /FAILED → PASSED/);
+assert.match(comment, /3072 → 12/);
+assert.match(comment, /Job log/);
+assert.match(
+  metricsVsBudget({
+    asset: { bytes: 1664 },
+    verdict: {
+      metrics: { triangles: 12 },
+      violations: [
+        {
+          code: "TRIANGLES_OVER_BUDGET",
+          got: { value: 12 },
+          want: { metric: "triangles", max: 4 },
+        },
+      ],
+    },
+  }),
+  /triangles 12\/4/,
+);
+
+const fetches = [];
+const fakeFetch = async (url, init = {}) => {
+  fetches.push({ url, method: init.method || "GET", body: init.body });
+  if (String(url).includes("/issues/7/comments") && !init.method) {
+    return {
+      ok: true,
+      json: async () => [{ id: 55, body: `${COMMENT_MARKER}\nold` }],
+    };
+  }
+  return { ok: true, json: async () => ({ id: 55 }) };
+};
+const updated = await upsertPrComment({
+  token: "test-token",
+  owner: "acme",
+  repo: "shop",
+  issueNumber: 7,
+  body: comment,
+  fetchFn: fakeFetch,
+});
+assert.equal(updated.action, "updated");
+assert.equal(updated.id, 55);
+assert.equal(fetches[1].method, "PATCH");
+assert.match(fetches[1].body, /judg3d failed/);
+
 
 const cases = [];
 for (const [id, assets, profile, expectedJudge, expectedStep, failOn] of [

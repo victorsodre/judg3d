@@ -35,3 +35,10 @@ is in [examples/github-action](../../../examples/github-action/README.md).
 
 On rejection or infrastructure failure the JSON report is appended to the job
 summary and, by default, uploaded as an artifact.
+
+On `pull_request` the action upserts one comment marked `<!-- judg3d-gate -->`
+instead of posting a new comment on every run. The body includes pass/fail,
+judged files, metrics versus profile budgets, an optional before/after block
+when `compare-report.json` is present in the report directory, and a link to
+the job log. Set `comment: false` to disable. Comment failures are warnings;
+they do not change exit 0/1/2. Grant `pull-requests: write` on the workflow.

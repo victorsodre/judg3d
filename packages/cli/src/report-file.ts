@@ -23,7 +23,15 @@ export async function assertReportDestination(
     );
   }
   for (const input of inputs) {
-    const info = await stat(input);
+    const info = await stat(input).catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+        return undefined;
+      }
+      throw error;
+    });
+    if (info === undefined) {
+      continue;
+    }
     if (
       (await realpath(input)) === canonical ||
       (destination?.dev === info.dev && destination.ino === info.ino)
@@ -41,18 +49,43 @@ export async function writeReport(
   inputs: readonly string[],
 ): Promise<void> {
   if (path === "-") return;
+  await writeAtomic(path, contents, inputs, `Could not write report to ${path}`);
+}
+
+/** Atomically write binary bytes without clobbering the asset or profile. */
+export async function writeBinary(
+  path: string,
+  contents: Uint8Array,
+  inputs: readonly string[],
+): Promise<void> {
+  await writeAtomic(
+    path,
+    contents,
+    inputs,
+    `Could not write repaired asset to ${path}`,
+  );
+}
+
+async function writeAtomic(
+  path: string,
+  contents: string | Uint8Array,
+  inputs: readonly string[],
+  failure: string,
+): Promise<void> {
   const temporary = join(dirname(resolve(path)), `.judg3d-${randomUUID()}.tmp`);
   try {
     await assertReportDestination(path, inputs);
     await writeFile(temporary, contents, {
-      encoding: "utf8",
       flag: "wx",
       mode: 0o600,
     });
     await rename(temporary, path);
   } catch (cause) {
     if (cause instanceof InfraError) throw cause;
-    throw new InfraError(`Could not write report to ${path}`);
+    throw new InfraError(
+      failure,
+      cause instanceof Error ? cause.message : String(cause),
+    );
   } finally {
     await rm(temporary, { force: true });
   }

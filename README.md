@@ -11,12 +11,12 @@ Reusable **[GitHub Action](.github/actions/judg3d-gate/README.md)** on `main` ·
 [copy-paste workflow](examples/github-action/README.md) ·
 [tester guide](docs/launch/tester-guide.md)
 
-**0.2.0** is this source (CLI, MCP, local app, `compare`).
+**0.2.0** is this source (CLI, MCP, local app, `compare`, `fix`).
 **[0.1.0](https://www.npmjs.com/package/judg3d)** is the last published npm set
 (`app` and `judge`). The historical `judg3d@0.0.1` package was a name
 reservation only. This page does not claim stars, downloads or adoption.
 
-## Three commands
+## Commands
 
 Requires Node **22.13.0 or later**. No OpenAI account or API key is needed.
 
@@ -24,6 +24,8 @@ Requires Node **22.13.0 or later**. No OpenAI account or API key is needed.
 npx --yes judg3d@0.2.0 app
 npx --yes judg3d@0.2.0 judge model.glb -p web-commerce
 npx --yes judg3d@0.2.0 compare before.glb after.glb -p profile.json
+npx --yes judg3d@0.2.0 fix model.glb -p profile.json
+npx --yes judg3d@0.2.0 fix model.glb -p profile.json --apply
 ```
 
 Until 0.2.0 is on npm, run the same commands from a source checkout
@@ -46,6 +48,7 @@ pnpm judg3d app
 pnpm judg3d judge fixtures/valido.glb --profile profiles/web-commerce.json
 pnpm judg3d compare fixtures/valido.glb fixtures/quebrado.glb \
   --profile profiles/web-commerce.json
+pnpm judg3d fix fixtures/quebrado.glb --profile profiles/web-commerce.json
 ```
 
 The app prints its local address, defaulting to `http://127.0.0.1:8787`.
@@ -98,16 +101,20 @@ pnpm judg3d judge model.glb -p profiles/agent-loop.json --out -
 # Before/after diff against the same profile bytes.
 pnpm judg3d compare before.glb after.glb -p profiles/agent-loop.json -o compare-report.json
 
+# Ordered repair plan from the current verdict. --apply only runs safe extras stripping.
+pnpm judg3d fix model.glb -p profiles/agent-loop.json --report repair-report.json
+pnpm judg3d fix model.glb -p profiles/agent-loop.json --apply --out-asset model.fixed.glb
+
 # Runtime information and installed profile directory.
 pnpm judg3d engine
 pnpm judg3d profiles
 ```
 
-| Exit | `judge` | `compare`                                                          |
-| ---- | ------- | ------------------------------------------------------------------ |
-| 0    | Passed  | Both assets passed the checks that ran                             |
-| 1    | Failed  | At least one asset failed; the compare document was still written  |
-| 2    | Infra   | Configuration, I/O or processing failed; no new document           |
+| Exit | `judge` | `compare`                                                          | `fix`                                              |
+| ---- | ------- | ------------------------------------------------------------------ | -------------------------------------------------- |
+| 0    | Passed  | Both assets passed the checks that ran                             | Plan-only succeeded, or `--apply` left a PASS      |
+| 1    | Failed  | At least one asset failed; the compare document was still written  | `--apply` ran and the asset still fails the budget |
+| 2    | Infra   | Configuration, I/O or processing failed; no new document           | Configuration, I/O or processing failed            |
 
 Check the exit code before consuming a report file. An infrastructure failure
 preserves any existing report, which belongs to an earlier run. `--out -` is
@@ -120,7 +127,11 @@ byte-identical reports.
 ### GitHub Action
 
 A composite action runs the same CLI through `npx` and fails the job when an
-asset is rejected (exit 1). Exit 2 is a hard error, not an asset verdict.
+asset is rejected (exit 1). Exit 2 is a hard error, not an asset verdict. On
+`pull_request` it also upserts a summary comment (`<!-- judg3d-gate -->`) with
+pass/fail, file list, metrics versus budget, an optional before/after block,
+and a job-log link. Set `comment: false` to disable. Grant
+`pull-requests: write`.
 
 ```yaml
 - uses: victorsodre/judg3d/.github/actions/judg3d-gate@main
@@ -128,6 +139,7 @@ asset is rejected (exit 1). Exit 2 is a hard error, not an asset verdict.
     assets: assets/product.glb
     profile: web-commerce
     version: "0.1.0"
+    comment: auto
 ```
 
 Copy the [example workflow](examples/github-action/README.md), pin the action
@@ -164,9 +176,9 @@ through `extends`, or enabling PROFILE without SCHEMA also returns exit 2.
 
 ## MCP for agents
 
-The MCP server exposes `judge_asset` and, in this repository, `compare_assets`
-for reading local files. Configure the published CLI and restrict the workspace
-to your project:
+The MCP server exposes `judge_asset`, `compare_assets` and `fix_asset` for
+reading local files. `fix_asset` returns a repair plan and does not write
+files. Configure the published CLI and restrict the workspace to your project:
 
 ```json
 {
@@ -190,6 +202,11 @@ the same profile bytes. The compare document records verdicts, metric deltas,
 violations added/removed/unchanged by code, and a coverage note. Differing
 coverage never turns an unperformed layer into PASS.
 
+`fix_asset` takes `{ "asset", "profile" }` and returns `structuredContent.repair`
+with an ordered plan (schema, extras, textures, budgets). It does not remesh or
+mutate the workspace. Use the CLI `--apply` path to strip unused extras and
+then `compare`.
+
 Both paths, including symlink targets, must remain inside the workspace. The
 tools do not write reports or access URLs. They return `structuredContent` with
 `ok`, `exitHint` and either `report` or `compare`. Asset rejection is a normal
@@ -197,7 +214,8 @@ result (`exitHint: 1`); infrastructure failures use `isError: true` and
 `exitHint: 2`. Stdout is reserved for the protocol.
 
 `judg3d@0.1.0` on npm includes `judge_asset` only. This 0.2.0 source adds
-`compare` / `compare_assets`. Use the repository until 0.2.0 is published.
+`compare` / `compare_assets` and `fix` / `fix_asset`. Use the repository until
+0.2.0 is published.
 
 ## Limits and privacy
 

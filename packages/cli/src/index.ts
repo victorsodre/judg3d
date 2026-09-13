@@ -5,6 +5,7 @@ import { EXIT_INFRA } from "@judg3d/core";
 import { engineVersions } from "@judg3d/judge";
 
 import { runCompareCommand } from "./commands/compare.js";
+import { parseMaxSteps, runFixCommand } from "./commands/fix.js";
 import { runJudgeCommand } from "./commands/judge.js";
 import { CLI_VERSION } from "./version.js";
 
@@ -115,6 +116,86 @@ program
         stderr: (line) => process.stderr.write(`${line}\n`),
       });
       process.exitCode = code;
+    },
+  );
+
+program
+  .command("fix")
+  .description(
+    "Build an ordered repair plan from a judge report. Optionally apply safe extras stripping and compare.",
+  )
+  .argument("<asset>", "path to the .glb or .gltf file")
+  .requiredOption("-p, --profile <file>", "JSON profile containing the rules")
+  .option(
+    "-o, --report <file>",
+    "repair document destination (- for stdout only)",
+    "repair-report.json",
+  )
+  .option("--json", "print the JSON document instead of the human summary", false)
+  .option("--apply", "apply up to --max-steps safe transforms, then re-judge and compare", false)
+  .option("--max-steps <n>", "maximum safe automatic steps to apply", "2")
+  .option("--out-asset <file>", "destination for a repaired copy when --apply writes bytes")
+  .option("--from-report <file>", "reuse a judge report when asset and profile hashes match")
+  .addHelpText(
+    "after",
+    [
+      "",
+      "Without --apply the command only prints the plan and exits 0.",
+      "With --apply, safe extras stripping may write --out-asset (default <name>.fixed.glb).",
+      "Budget and schema repairs stay as commands; they are not remeshed automatically.",
+      "After a mutation, the existing compare path diffs before and after.",
+      "",
+      "Exit codes:",
+      "  0  plan-only succeeded, or --apply left a passing asset",
+      "  1  --apply ran and the asset still fails the profile",
+      "  2  infrastructure failure — no new document was produced",
+    ].join("\n"),
+  )
+  .action(
+    async (
+      asset: string,
+      options: {
+        profile: string;
+        report: string;
+        json: boolean;
+        apply: boolean;
+        maxSteps: string;
+        outAsset?: string;
+        fromReport?: string;
+      },
+    ) => {
+      try {
+        const code = await runFixCommand(
+          asset,
+          {
+            profile: options.profile,
+            out: options.report,
+            json: options.json,
+            apply: options.apply,
+            maxSteps: parseMaxSteps(options.maxSteps),
+            ...(options.outAsset === undefined
+              ? {}
+              : { outAsset: options.outAsset }),
+            ...(options.fromReport === undefined
+              ? {}
+              : { fromReport: options.fromReport }),
+          },
+          {
+            judg3dVersion: CLI_VERSION,
+            stdout: (line) => process.stdout.write(`${line}\n`),
+            stderr: (line) => process.stderr.write(`${line}\n`),
+          },
+        );
+        process.exitCode = code;
+      } catch (error) {
+        process.stderr.write(
+          `judg3d: ${error instanceof Error ? error.message : "unexpected failure"}\n`,
+        );
+        process.stderr.write(
+          "This is an infrastructure failure (exit 2), not an asset rejection.\n",
+        );
+        process.exitCode = EXIT_INFRA;
+      }
     },
   );
 

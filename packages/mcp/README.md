@@ -1,11 +1,13 @@
 # @judg3d/mcp
 
-Local MCP server exposing `judge_asset` and `compare_assets`.
+Local MCP server exposing `judge_asset`, `compare_assets` and `fix_asset`.
 Run `judg3d mcp --root /path/to/project`.
 Uses the official v2 SDK over stdio. Descriptions and outputs are in English.
 
 `judge_asset` arguments: `{ "asset": "model.glb", "profile": "profile.json" }`.
 `compare_assets` arguments: `{ "before": "a.glb", "after": "b.glb", "profile": "profile.json" }`.
+`fix_asset` arguments: `{ "asset": "model.glb", "profile": "profile.json" }`.
+It returns a repair plan and does not write or remesh files.
 Paths and symlink targets must remain inside the authorized workspace.
 The tools do not fetch URLs or write files. Results are returned as text and
 structuredContent. FAIL is a normal result (exitHint 1); infrastructure failures

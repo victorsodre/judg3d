@@ -6,6 +6,8 @@ Help, diagnostics and generated reports are in English.
 ```sh
 judg3d judge model.glb --profile profile.json --out result.json
 judg3d compare before.glb after.glb --profile profile.json --out compare-report.json
+judg3d fix model.glb --profile profile.json --report repair-report.json
+judg3d fix model.glb --profile profile.json --apply --out-asset model.fixed.glb
 judg3d app
 judg3d mcp --root /path/to/project
 judg3d profiles
@@ -14,6 +16,8 @@ judg3d profiles
 `judge` exit 0: passed. Exit 1: failed. Exit 2: infrastructure failure without a new verdict.
 `compare` exit 0: both assets passed. Exit 1: at least one failed (document still written).
 Exit 2: infrastructure failure, including two different profile hashes.
+`fix` without `--apply` always exits 0 when the plan was written. `--apply` exits 0
+only when the after asset passed; remaining budget/schema failures stay exit 1.
 A reusable GitHub Action wraps this command; see the
 [repository README](../../README.md#github-action).
 `--out -` prints JSON only. The app runs at http://127.0.0.1:8787 and uses English.

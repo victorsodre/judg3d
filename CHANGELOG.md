@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **`judg3d fix`.** Builds an ordered repair plan from SCHEMA/PROFILE findings
+  and unused extras. Plan-only exits 0. `--apply` may strip extras, then
+  re-judges and compares; remaining budget failures stay exit 1. MCP exposes
+  the same plan as `fix_asset` (read-only).
+- **PR comment on `judg3d-gate`.** The Action upserts a pull-request comment
+  (`<!-- judg3d-gate -->`) with pass/fail, files, metrics versus budget, an
+  optional before/after summary and a job-log link. Default `comment: auto`.
+  Comment errors do not change the gate exit.
+
 ## 0.2.0 — 2026-09-12
 
 Source prepared for the next npm publication. **0.1.0 remains the last

@@ -15,6 +15,8 @@ source is 0.2.0: SCHEMA and PROFILE through CLI, local HTTP/UI, MCP,
   skipped layers so a baseline cannot turn an unperformed check into PASS.
 - Reusable GitHub Action (`judg3d-gate`) and a copy-paste workflow that fail a
   PR on asset rejection. Other CI hosts can reuse the same CLI exits.
+- `judg3d fix` turns existing findings into an ordered plan and can strip
+  unused extras; it does not remesh. The gate Action can upsert a PR comment.
 
 ## Next: independent trials
 

@@ -4,16 +4,18 @@ import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import {
+  buildRepairPlan,
   compareExitCode,
   compareReports,
   InfraError,
   loadProfile,
   serializeCompare,
+  serializeRepair,
   serializeReport,
   type JudgeReport,
   type LoadedProfile,
 } from "@judg3d/core";
-import { judgeIsolated, readAsset } from "@judg3d/judge";
+import { inspectExtras, judgeIsolated, readAsset } from "@judg3d/judge";
 
 type ServerOptions = { root: string; version: string; timeoutMs?: number };
 
@@ -187,6 +189,67 @@ export async function createJudgeServer(
             ok: true,
             exitHint: compareExitCode(compare),
             compare,
+          },
+        };
+      } catch (error) {
+        return asInfra(error);
+      } finally {
+        active -= 1;
+      }
+    },
+  );
+  server.registerTool(
+    "fix_asset",
+    {
+      title: "Plan repairs for a local 3D asset",
+      description:
+        "Judge a glTF/GLB and return an ordered repair plan from SCHEMA/PROFILE findings and unused extras. Does not mutate files, remesh, or fetch URLs. Asset rejection is a valid result (exitHint 1) and still includes the plan. Infrastructure failures return isError and exitHint 2.",
+      inputSchema: z.strictObject({
+        asset: PATH_FIELD.describe("Asset path inside the workspace."),
+        profile: PATH_FIELD.describe("JSON profile path inside the workspace."),
+      }),
+      annotations: TOOL_HINTS,
+    },
+    async ({ asset, profile }, ctx) => {
+      const blocked = busy();
+      if (blocked !== undefined) return blocked;
+      active += 1;
+      try {
+        const loaded = await loadProfile(await workspaceFile(root, profile));
+        const assetPath = await workspaceFile(root, asset);
+        const input = await readAsset(assetPath);
+        input.uri = relative(root, assetPath).split(sep).join("/");
+        const report = await judgeIsolated(
+          {
+            asset: input,
+            profile: loaded,
+            options: { judg3dVersion: options.version },
+          },
+          isolation(ctx.mcpReq.signal),
+        );
+        const extras = inspectExtras(input.bytes);
+        const plan = buildRepairPlan(
+          report,
+          extras.pointers.length === 0
+            ? []
+            : [{ kind: "extras", pointers: extras.pointers }],
+          { commandAsset: input.uri },
+        );
+        const document = {
+          judg3dVersion: options.version,
+          mode: "plan" as const,
+          asset: report.asset,
+          profile: report.profile,
+          before: report,
+          plan,
+          applied: [],
+        };
+        return {
+          content: [{ type: "text", text: serializeRepair(document) }],
+          structuredContent: {
+            ok: true,
+            exitHint: report.verdict.pass ? 0 : 1,
+            repair: document,
           },
         };
       } catch (error) {

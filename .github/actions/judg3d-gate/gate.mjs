@@ -5,6 +5,15 @@ import { accessSync, constants as fsConstants } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  jobLogUrl,
+  loadCompareArtifact,
+  prCommentBody,
+  pullRequestNumber,
+  shouldPostComment,
+  upsertPrComment,
+} from "./comment.mjs";
+
 /** CLI exit codes. Do not invent a fourth meaning. */
 export const EXIT_PASS = 0;
 export const EXIT_FAIL = 1;
@@ -497,8 +506,58 @@ export async function main(env = process.env) {
     summaryPath: env.GITHUB_STEP_SUMMARY,
     outputPath: env.GITHUB_OUTPUT,
   });
+  await maybePostComment(result, env).catch((error) => {
+    process.stderr.write(
+      `judg3d-gate: could not post PR comment: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+  });
   process.exitCode = result.stepExit;
   return result;
+}
+
+export async function maybePostComment(result, env, fetchFn = fetch) {
+  if (!shouldPostComment(env.JUDG3D_COMMENT, env.GITHUB_EVENT_NAME)) {
+    return undefined;
+  }
+  const number = pullRequestNumber(env);
+  const repo = String(env.GITHUB_REPOSITORY || "");
+  const [owner, name] = repo.split("/");
+  const token = env.GITHUB_TOKEN || env.GH_TOKEN;
+  const compare = await loadCompareArtifact(result.reportDir, readFile);
+  const body = prCommentBody({
+    results: result.results,
+    compare,
+    jobUrl: jobLogUrl(env),
+  });
+  await mkdir(resolve(result.reportDir || env.JUDG3D_REPORT_DIR || "judg3d-reports"), {
+    recursive: true,
+  });
+  const commentPath = join(
+    resolve(env.JUDG3D_WORKING_DIRECTORY || env.GITHUB_WORKSPACE || process.cwd(), result.reportDir),
+    "pr-comment.md",
+  );
+  try {
+    await writeFile(commentPath, body);
+  } catch {
+    // The uploaded reports remain the source of truth if the sidecar cannot be written.
+  }
+  if (number === undefined || !owner || !name) {
+    return { skipped: "not-a-pull-request", body };
+  }
+  if (!token) {
+    process.stderr.write("judg3d-gate: comment requested but GITHUB_TOKEN is missing.\n");
+    return { skipped: "missing-token", body };
+  }
+  const posted = await upsertPrComment({
+    token,
+    apiUrl: env.GITHUB_API_URL || "https://api.github.com",
+    owner,
+    repo: name,
+    issueNumber: number,
+    body,
+    fetchFn,
+  });
+  return { ...posted, body };
 }
 
 if (invokedDirectly()) {

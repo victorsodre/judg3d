@@ -26,9 +26,11 @@ describe("MCP real", () => {
         expect(listing.tools.map((tool) => tool.name)).toEqual([
           "judge_asset",
           "compare_assets",
+          "fix_asset",
         ]);
         expect(listing.tools[0]?.annotations?.readOnlyHint).toBe(true);
         expect(listing.tools[1]?.annotations?.readOnlyHint).toBe(true);
+        expect(listing.tools[2]?.annotations?.readOnlyHint).toBe(true);
         for (const [asset, exitHint] of [
           ["valido.glb", 0],
           ["quebrado.glb", 1],
@@ -88,6 +90,30 @@ describe("MCP real", () => {
           ok: true,
           exitHint: 0,
         });
+
+        const planned = await client.callTool({
+          name: "fix_asset",
+          arguments: {
+            asset: "fixtures/quebrado.glb",
+            profile: "profiles/web-commerce.json",
+          },
+        });
+        expect(planned.isError).not.toBe(true);
+        expect(planned.structuredContent).toMatchObject({
+          ok: true,
+          exitHint: 1,
+          repair: { mode: "plan" },
+        });
+        const repair = planned.structuredContent as {
+          repair: { plan: { steps: { code: string; autoApply: string }[] } };
+        };
+        expect(repair.repair.plan.steps.map((step) => step.code)).toContain(
+          "UNRESOLVED_REFERENCE",
+        );
+        expect(
+          repair.repair.plan.steps.every((step) => step.autoApply === "manual"),
+        ).toBe(true);
+        expect(JSON.stringify(planned)).not.toContain(root);
 
         const missing = await client.callTool({
           name: "judge_asset",
