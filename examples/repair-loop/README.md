@@ -4,6 +4,15 @@
 pnpm demo:repair
 ```
 
+To plan a repair from the failing export without changing the profile:
+
+```sh
+pnpm judg3d fix artifacts/repair-loop/before.glb -p examples/repair-loop/profile.json
+```
+
+`--apply` only strips unused extras when they exist. Triangle reduction stays
+a suggested command; this demo's `after.glb` is an authoring re-export.
+
 Or, after the demo has written the two exports, the one-liner is:
 
 ```sh

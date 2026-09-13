@@ -1,7 +1,7 @@
 # @judg3d/core
 
-Verdict, Violation, JudgeReport and CompareDocument contracts, strict profile
-loading, SHA-256 hashes and deterministic judg3d serialization.
+Verdict, Violation, JudgeReport, CompareDocument and RepairDocument contracts,
+strict profile loading, SHA-256 hashes and deterministic judg3d serialization.
 
 `@judg3d/core/present` provides browser-safe report/compare validation and formatting.
 Do not import the package root in the browser: it uses Node APIs.

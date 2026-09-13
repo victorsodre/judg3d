@@ -20,7 +20,7 @@ mcp add` command shape was checked against the local CLI on 2026-09-07. The
 [official MCP documentation](https://developers.openai.com/codex/mcp) describes
 client setup and configuration options.
 
-The tools are `judge_asset` and `compare_assets`:
+The tools are `judge_asset`, `compare_assets` and `fix_asset`:
 
 ```json
 { "asset": "assets/product.glb", "profile": "profiles/product.json" }
@@ -41,17 +41,22 @@ failures set `isError: true` and return `exitHint: 2` in the error text.
 No result should be interpreted as a visual-quality score. A coverage note
 lists layers that did not run.
 
-The same comparison is available on the CLI:
+`fix_asset` returns an ordered plan from the current findings. It does not
+write files. On the CLI, `judg3d fix asset.glb -p profile.json` prints the
+same plan (exit 0). `judg3d fix … --apply` may strip unused extras, then
+re-judges and uses `compare`.
 
 ```sh
 judg3d compare assets/before.glb assets/after.glb -p profiles/product.json
+judg3d fix assets/product.glb -p profiles/product.json
 ```
 
 ## GitHub Actions
 
 The same CLI exits apply in CI. A composite action runs
 `npx --yes judg3d@<version> judge` and fails the job on exit 1. Exit 2 is an
-infrastructure error, not an asset verdict. See
+infrastructure error, not an asset verdict. On pull requests it upserts a
+summary comment. See
 [examples/github-action](../examples/github-action/README.md).
 
 ## A bounded authoring loop

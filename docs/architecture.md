@@ -2,7 +2,9 @@
 
 judg3d separates deterministic asset acceptance from presentation and transport.
 Its current scope is SCHEMA and PROFILE. It does not implement a renderer,
-geometry engine, repair system or semantic judge.
+geometry engine, remesher or semantic judge. `judg3d fix` turns existing
+findings into an ordered plan and may strip unused extras; it does not invent
+metrics or rewrite meshes.
 
 ```mermaid
 flowchart LR
@@ -22,7 +24,7 @@ flowchart LR
 | judge   | Khronos integration, PROFILE rules and isolated worker execution                           |
 | app     | Local HTTP transport and English/pt-BR interface                                           |
 | mcp     | Official SDK transport and read-only workspace-restricted tools                            |
-| cli     | Commands (`judge`, `compare`), exit codes, terminal presentation and atomic report writing |
+| cli     | Commands (`judge`, `compare`, `fix`), exit codes, terminal presentation and atomic report writing |
 
 ## Invariants
 
@@ -59,6 +61,11 @@ Tests exercise invalid assets/configuration, truncation, contradictory reports,
 large diagnostics, cancellation, path escapes, HTTP boundaries and real MCP
 transport. The clean-install check exercises packed artifacts. The demo ties
 three verdicts and an infrastructure error to reproducible inputs.
+
+`judg3d fix` judges (or accepts a matching report), builds a deterministic
+repair plan from those findings, and with `--apply` can strip unused extras
+before reusing `compare`. Suggested compression or simplify commands stay
+outside the judge.
 
 `judg3d compare` runs two isolated `judge` evaluations with the same loaded
 profile, then derives a compare document. Profile identity is the SHA-256 of

@@ -23,6 +23,13 @@ export {
   type ProfileLayerResult,
 } from "./layers/l2-profile.js";
 
+export {
+  inspectExtras,
+  stripUnusedExtras,
+  type ExtrasInspection,
+  type StripExtrasResult,
+} from "./glb-json.js";
+
 export { engineVersions } from "./engine.js";
 
 export { judgeIsolated } from "./isolated.js";

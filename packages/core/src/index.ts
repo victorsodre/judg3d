@@ -38,6 +38,7 @@ export {
   formatBytes,
   formatSignedDelta,
   isCompareDocument,
+  isJudgeReport,
   messageOf,
   shortHash,
   violationDetail,
@@ -64,6 +65,22 @@ export {
 } from "./profile.js";
 
 export { serializeReport, type JudgeReport } from "./report.js";
+
+export {
+  STRIP_UNUSED_EXTRAS_STEP_ID,
+  buildRepairPlan,
+  isSafeRepairStep,
+  repairExitCode,
+  serializeRepair,
+  suggestedFixedName,
+  type RepairApplication,
+  type RepairAutoApply,
+  type RepairDocument,
+  type RepairFinding,
+  type RepairPlan,
+  type RepairPlanOptions,
+  type RepairStep,
+} from "./repair.js";
 
 export {
   readBoundedFile,
