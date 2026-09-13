@@ -3,7 +3,10 @@
 This example shows how another repository can call the
 [judg3d-gate](../../.github/actions/judg3d-gate/README.md) composite action
 in about five minutes. The action runs the published `judg3d` CLI through
-`npx`. It does not require a pnpm checkout of this monorepo.
+`npx`. It does not require a pnpm checkout of this monorepo. On pull requests
+it updates a single summary comment (`<!-- judg3d-gate -->`) so reviewers see
+pass/fail, metrics and a job-log link without opening logs. The workflow
+needs `pull-requests: write`. Set `comment: false` to keep the gate silent.
 
 ## 1. Choose a profile
 

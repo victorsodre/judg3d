@@ -31,6 +31,7 @@ jobs:
           profile: web-commerce
           version: "0.1.0"
           artifact-name: judg3d-pass-valid
+          comment: false
       - name: Require acceptance
         run: |
           test "${{ steps.gate.outputs.passed }}" = "true"
@@ -53,6 +54,7 @@ jobs:
           profile: web-commerce
           version: "0.1.0"
           artifact-name: judg3d-fail-quebrado
+          comment: false
       - name: Require rejection
         run: |
           if [[ "${{ steps.gate.outcome }}" != "failure" ]]; then
@@ -85,6 +87,7 @@ jobs:
           profile: examples/acceptance-gate/budget.json
           version: "0.1.0"
           artifact-name: judg3d-fail-budget
+          comment: false
       - name: Require budget rejection
         run: |
           if [[ "${{ steps.gate.outcome }}" != "failure" ]]; then
@@ -92,3 +95,24 @@ jobs:
             exit 1
           fi
           test "${{ steps.gate.outputs.exit-code }}" = "1"
+
+  comment-pull-request:
+    name: Comment gate summary on pull requests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Judge fixtures/valido.glb and comment
+        uses: ./.github/actions/judg3d-gate
+        with:
+          assets: fixtures/valido.glb
+          profile: web-commerce
+          version: "0.1.0"
+          comment: true
+          artifact-name: judg3d-pr-comment

@@ -51,6 +51,15 @@ inputs:
     description: Working directory for asset and profile paths. Defaults to the workspace root.
     required: false
     default: ""
+  comment:
+    description: >
+      Post or update a pull-request comment summarizing the gate.
+      `auto` (default) comments on pull_request events. `true` always
+      attempts a comment when a PR number is available. `false` disables it.
+      Requires `pull-requests: write`. Comment failures do not change the
+      judge exit code.
+    required: false
+    default: auto
 
 outputs:
   passed:
@@ -87,6 +96,8 @@ runs:
         JUDG3D_CLI: ${{ inputs.cli }}
         JUDG3D_REPORT_DIR: ${{ inputs.report-dir }}
         JUDG3D_WORKING_DIRECTORY: ${{ inputs.working-directory || github.workspace }}
+        JUDG3D_COMMENT: ${{ inputs.comment }}
+        GITHUB_TOKEN: ${{ github.token }}
       run: node "${{ github.action_path }}/gate.mjs"
 
     - name: Upload JSON reports
