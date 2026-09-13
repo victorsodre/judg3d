@@ -6,6 +6,7 @@ You do not need an OpenAI account or API key.
 
 ## Start locally
 
+`judg3d@0.2.0` is on npm for `app`, `judge`, `compare`, `mcp` and profiles.
 Start the local app, then judge or compare from the same CLI:
 
 ```sh
@@ -14,13 +15,17 @@ npx --yes judg3d@0.2.0 judge model.glb -p web-commerce
 npx --yes judg3d@0.2.0 compare before.glb after.glb -p profile.json
 ```
 
-Until 0.2.0 is on npm, use a source checkout (`pnpm judg3d …`) or
-`judg3d@0.1.0` for `app` and `judge`. `compare` is only in this 0.2.0 source.
+`judg3d fix` (repair plan / optional safe `--apply`) landed on **main** after the
+0.2.0 publish. It is **not** in npm `0.2.0` yet. Until the next release, use a
+source checkout (`pnpm build && pnpm judg3d fix …`) or wait for the next npm
+bump. Do not expect automatic remesh; `--apply` only runs limited safe
+transforms (for example extras stripping), then re-judges and compares.
 
 Open the address printed by the app. Your asset is processed locally; it is not
 uploaded to a hosted service. Stop the server with `Ctrl+C`.
 
-To run the reproducible examples or work on the source, use pnpm 11.22.0:
+To run the reproducible examples, try `fix`, or work on the source, use pnpm
+11.22.0:
 
 ```sh
 git clone https://github.com/victorsodre/judg3d.git
@@ -40,7 +45,9 @@ pnpm judg3d app
    `agent-loop` limits are examples. Start with `--profiles ./your-profiles`
    to load your own directory.
 4. If a real problem appears, correct the export in your authoring tool and
-   judge it again with the same profile. judg3d does not repair the asset.
+   judge it again with the same profile. judg3d does not remesh or artistically
+   repair the asset; optional `fix --apply` (source / post-0.2.0) only applies
+   limited safe transforms.
 5. Download the report and decide whether it gives enough information to act.
 
 For a known before/after pair, use the [repair-loop example](../../examples/repair-loop/README.md)
