@@ -3,5 +3,4 @@ packages:
 allowBuilds:
   esbuild: true
 overrides:
-  concurrently>shell-quote: 1.10.0
   vite>esbuild: 0.28.2
