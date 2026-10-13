@@ -5,7 +5,7 @@ It does not relicense dependencies, sample assets or third-party trademarks.
 
 ## Browser bundle
 
-The local UI bundles React 19.2.3, React DOM 19.2.3 and Scheduler 0.27.0
+The local UI bundles React 19.3.0, React DOM 19.3.0 and Scheduler 0.28.0
 from Meta. Their MIT copyright and permission notice follows in full.
 Source: https://github.com/facebook/react
 
