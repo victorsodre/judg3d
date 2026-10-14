@@ -20,7 +20,7 @@
     "@hono/node-server": "1.19.17",
     "@judg3d/core": "workspace:*",
     "@judg3d/judge": "workspace:*",
-    "hono": "4.13.7"
+    "hono": "4.13.13"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
